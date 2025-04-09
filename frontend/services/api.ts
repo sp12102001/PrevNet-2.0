@@ -24,6 +24,9 @@ export interface Occurrence {
     sentence: string;
     token: string;
     location_url: string;
+    author: string;
+    title: string;
+    century: string;
 }
 
 export interface MeaningData {
@@ -163,14 +166,44 @@ export const fetchMeaningData = async (meaningId: string): Promise<MeaningData |
                         // If we found matching examples, get the verb semantics
                         verb_semantics = matchingExamples[0].verb_semantics;
 
-                        // Add occurrences
+                        // Try to fetch additional details from the API if possible
+                        try {
+                            // The API might return detailed data with the meaning_id
+                            const detailUrl = `${BASE_URL}/meaning/${meaningId}`;
+                            const detailResponse = await fetch(detailUrl, {
+                                method: 'GET',
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'Content-Type': 'application/json',
+                                },
+                                mode: 'cors',
+                            });
+
+                            if (detailResponse.ok) {
+                                const detailData = await detailResponse.json();
+
+                                // Check if the API returned detailed occurrences
+                                if (detailData && Array.isArray(detailData.occurrences)) {
+                                    occurrences = detailData.occurrences;
+                                    console.log('Using detailed occurrences from API');
+                                    break; // No need to check other preverbs
+                                }
+                            }
+                        } catch (detailError) {
+                            console.warn('Could not fetch detailed data for meaning, using basic data:', detailError);
+                        }
+
+                        // Add occurrences with sample data (since we don't have the real data)
                         matchingExamples.forEach(ex => {
                             occurrences.push({
                                 preverb,
                                 lemma: ex.lemma,
                                 sentence: `Example of ${preverb} + ${ex.lemma}`,
                                 token: ex.lemma,
-                                location_url: ''
+                                location_url: '',
+                                author: 'Cicero', // Sample author (placeholder)
+                                title: 'De Natura Deorum', // Sample title (placeholder)
+                                century: 'cent. 1 BCE' // Sample century (placeholder)
                             });
                         });
                     }

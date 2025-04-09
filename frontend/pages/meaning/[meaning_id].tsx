@@ -11,6 +11,12 @@ export default function MeaningPage() {
   // Use our custom hook to fetch data
   const { data, loading, error } = useMeaningData(meaning_id as string);
 
+  // Format century by removing "cent." prefix
+  const formatCentury = (century: string) => {
+    if (!century) return "Unknown";
+    return century.replace(/^cent\.\s*/i, '');
+  };
+
   if (loading || !meaning_id) {
     return <LoadingSpinner />;
   }
@@ -55,35 +61,52 @@ export default function MeaningPage() {
       <h1 className="text-3xl font-bold mb-4">Meaning: &quot;{data.verb_semantics}&quot;</h1>
 
       {data.occurrences.map((item, idx) => (
-        <div key={idx} className="mb-4 border border-gray-200 p-2 rounded">
-          <p><strong>Preverb:</strong> {item.preverb}</p>
-          <p><strong>Lemma:</strong> {item.lemma}</p>
-          <p>
-            <strong>Sentence:</strong>{' '}
-            {(item.sentence.split(new RegExp(`(${item.token})`, 'gi')) as string[]).map((part, i) =>
-              part.toLowerCase() === item.token.toLowerCase() ? (
-                <b key={i}>{part}</b>
-              ) : (
-                part
-              )
-            )}
-          </p>
-
-          <p>
-            <strong>Location:</strong>{' '}
-            {item.location_url ? (
-              <a
-                href={item.location_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-500 underline"
-              >
-                {item.location_url}
-              </a>
-            ) : (
-              <span className="text-gray-500">No location available</span>
-            )}
-          </p>
+        <div key={idx} className="mb-4 border border-gray-200 p-4 rounded shadow-sm">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <p><strong>Preverb:</strong> {item.preverb}</p>
+              <p><strong>Lemma:</strong> {item.lemma}</p>
+              <p>
+                <strong>Sentence:</strong>{' '}
+                {(item.sentence.split(new RegExp(`(${item.token})`, 'gi')) as string[]).map((part, i) =>
+                  part.toLowerCase() === item.token.toLowerCase() ? (
+                    <b key={i}>{part}</b>
+                  ) : (
+                    part
+                  )
+                )}
+              </p>
+            </div>
+            <div>
+              <p>
+                <strong>Author:</strong>{' '}
+                {item.author || <span className="text-gray-500">Unknown</span>}
+              </p>
+              <p>
+                <strong>Work:</strong>{' '}
+                {item.title || <span className="text-gray-500">Unknown</span>}
+              </p>
+              <p>
+                <strong>Century:</strong>{' '}
+                {item.century ? formatCentury(item.century) : <span className="text-gray-500">Unknown</span>}
+              </p>
+              <p>
+                <strong>Location:</strong>{' '}
+                {item.location_url ? (
+                  <a
+                    href={item.location_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-500 underline"
+                  >
+                    {item.location_url}
+                  </a>
+                ) : (
+                  <span className="text-gray-500">No location available</span>
+                )}
+              </p>
+            </div>
+          </div>
         </div>
       ))}
     </div>

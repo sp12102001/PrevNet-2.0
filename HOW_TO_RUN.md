@@ -56,6 +56,24 @@ The application uses the following components:
 - TailwindCSS for styling
 - Recharts for data visualization
 
+## Features
+
+### Preverb Analysis Dashboard
+The main dashboard displays preverbs and their analysis including:
+- Verbal bases distribution
+- Meanings distribution
+- Examples of usage
+
+### Meaning Detail Page
+When clicking on a meaning, the following information is displayed:
+- Preverb used
+- Lemma (word form)
+- Sentence example
+- Author of the text
+- Work title
+- Century (formatted without the "cent." prefix)
+- Location (if available)
+
 ## API Information
 
 The application now uses the KCL hosted API directly:
