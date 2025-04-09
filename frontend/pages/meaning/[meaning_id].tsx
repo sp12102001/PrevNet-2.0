@@ -3,27 +3,81 @@ import { useMeaningData } from '@/services/api';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import Link from 'next/link';
 import ErrorFallback from '@/components/ErrorFallback';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function MeaningPage() {
   const router = useRouter();
   const { meaning_id } = router.query;
+  const [hasLogged, setHasLogged] = useState(false);
 
   // Add debugging for the meaning_id
   useEffect(() => {
-    if (meaning_id) {
+    if (meaning_id && !hasLogged) {
       console.log('Viewing meaning page for ID:', meaning_id);
+      console.log('Query params:', router.query);
+      setHasLogged(true);
     }
-  }, [meaning_id]);
+  }, [meaning_id, router.query, hasLogged]);
 
   // Use our custom hook to fetch data
   const { data, loading, error } = useMeaningData(meaning_id as string);
+
+  // Helper to highlight tokens in sentences
+  const highlightToken = (sentence: string, token: string) => {
+    if (!sentence || !token) {
+      return <span className="text-gray-400">No example sentence available</span>;
+    }
+
+    try {
+      // Try to find the token in the sentence using case-insensitive matching
+      const tokenRegex = new RegExp(`(${token.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi');
+      const parts = sentence.split(tokenRegex);
+
+      // If we couldn't split the sentence (token not found), try with just the preverb + first part of lemma
+      if (parts.length <= 1 && token.length > 2) {
+        const simplifiedToken = token.substring(0, token.length > 3 ? 3 : token.length);
+        const simplifiedRegex = new RegExp(`(${simplifiedToken.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi');
+        const simplifiedParts = sentence.split(simplifiedRegex);
+
+        if (simplifiedParts.length > 1) {
+          return simplifiedParts.map((part, i) => {
+            if (part.toLowerCase().includes(simplifiedToken.toLowerCase())) {
+              return <span key={i} className="font-bold text-blue-700">{part}</span>;
+            }
+            return <span key={i}>{part}</span>;
+          });
+        }
+      }
+
+      // Return the highlighted parts if we found a match
+      if (parts.length > 1) {
+        return parts.map((part, i) => {
+          if (part.toLowerCase() === token.toLowerCase()) {
+            return <span key={i} className="font-bold text-blue-700">{part}</span>;
+          }
+          return <span key={i}>{part}</span>;
+        });
+      }
+
+      // If no matches, just return the sentence as is
+      return <span>{sentence}</span>;
+    } catch (e) {
+      console.error('Error highlighting token:', e);
+      return <span>{sentence}</span>;
+    }
+  };
 
   // Format century by removing "cent." prefix
   const formatCentury = (century: string) => {
     if (!century) return "Unknown";
     return century.replace(/^cent\.\s*/i, '');
   };
+
+  useEffect(() => {
+    if (data) {
+      console.log('Meaning data loaded:', data);
+    }
+  }, [data]);
 
   if (loading || !meaning_id) {
     return <LoadingSpinner />;
@@ -79,8 +133,6 @@ export default function MeaningPage() {
     );
   }
 
-  console.log('Rendering data for meaning:', data);
-
   return (
     <div className="container mx-auto p-4">
       <Link href="/" className="inline-flex items-center gap-2 mb-4 text-blue-500 hover:text-blue-700 hover:underline transition-colors duration-200">
@@ -104,27 +156,17 @@ export default function MeaningPage() {
             <div key={idx} className="border border-gray-200 p-4 rounded shadow-sm hover:shadow-md transition-shadow duration-200 bg-white">
               <div className="flex items-center mb-3">
                 <div className="bg-blue-100 text-blue-800 rounded-full px-3 py-1 text-sm font-semibold mr-2">
-                  {item.preverb}
+                  {item.preverb || '?'}
                 </div>
                 <div className="text-gray-700">
-                  + <span className="font-medium">{item.lemma}</span>
+                  + <span className="font-medium">{item.lemma || '?'}</span>
                 </div>
               </div>
 
               <div className="space-y-2">
                 <p className="bg-gray-50 p-2 rounded">
                   <span className="block text-xs text-gray-500 mb-1">Sentence:</span>
-                  {item.sentence && item.token ? (
-                    (item.sentence.split(new RegExp(`(${item.token})`, 'gi')) as string[]).map((part, i) =>
-                      part.toLowerCase() === item.token?.toLowerCase() ? (
-                        <span key={i} className="font-bold text-blue-700">{part}</span>
-                      ) : (
-                        <span key={i}>{part}</span>
-                      )
-                    )
-                  ) : (
-                    <span className="text-gray-400">No example sentence available</span>
-                  )}
+                  {highlightToken(item.sentence, item.token)}
                 </p>
 
                 <div className="grid grid-cols-2 gap-2 text-sm">

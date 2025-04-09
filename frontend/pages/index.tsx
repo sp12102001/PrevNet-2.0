@@ -220,15 +220,32 @@ const PreverbDashboard = () => {
                       <TableCell>
                         <Link
                           href={`/meaning/${encodeURIComponent(example.meaning_id)}`}
-                          className="text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1 cursor-pointer"
-                          onClick={() => console.log(`Clicking meaning: ${example.meaning_id} - ${example.verb_semantics}`)}
+                          className="text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1 cursor-pointer relative group"
+                          onClick={() => {
+                            console.log(`Clicking meaning: ${example.meaning_id} - ${example.verb_semantics}`);
+                            // Track this click in localStorage to help with debugging
+                            try {
+                              const clicks = JSON.parse(localStorage.getItem('meaningClicks') || '[]');
+                              clicks.push({
+                                meaningId: example.meaning_id,
+                                semantics: example.verb_semantics,
+                                timestamp: new Date().toISOString()
+                              });
+                              localStorage.setItem('meaningClicks', JSON.stringify(clicks.slice(-20)));
+                            } catch (e) {
+                              console.error('Error tracking click:', e);
+                            }
+                          }}
                         >
-                          {example.verb_semantics}
+                          <span>{example.verb_semantics}</span>
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
                             <path d="M15 3h6v6"></path>
                             <path d="M10 14L21 3"></path>
                             <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
                           </svg>
+                          <span className="absolute bottom-full left-0 mb-2 hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap">
+                            View meaning ID: {example.meaning_id}
+                          </span>
                         </Link>
                       </TableCell>
                       <TableCell>{example.count}</TableCell>

@@ -184,6 +184,8 @@ export const fetchPreverbData = async (preverb: string): Promise<PreverbData | n
 
 // Fetch data for a specific meaning
 export const fetchMeaningData = async (meaningId: string): Promise<MeaningData | null> => {
+    if (!meaningId) return null;
+
     try {
         console.log(`Fetching data for meaning: ${meaningId}`);
 
@@ -199,6 +201,29 @@ export const fetchMeaningData = async (meaningId: string): Promise<MeaningData |
         let foundData = false;
         let occurrences: Occurrence[] = [];
         let verb_semantics = 'Unknown';
+
+        // Check common verb meanings (v#) from dataset
+        if (meaningId.startsWith('v#')) {
+            try {
+                // Hardcoded examples for some common verb meanings
+                const verbMeanings: Record<string, string> = {
+                    'v#01410345': 'run or move very quickly or hastily',
+                    'v#01360914': 'move ahead; travel onward',
+                    'v#01420490': 'to run away',
+                    'v#00169694': 'make progress',
+                    'v#01790203': 'come into existence or develop',
+                    'v#00235191': 'come to pass; occur'
+                };
+
+                // If we have this meaning ID in our dictionary, use it
+                if (verbMeanings[meaningId]) {
+                    verb_semantics = verbMeanings[meaningId];
+                    console.log(`Using known verb semantics for ${meaningId}: ${verb_semantics}`);
+                }
+            } catch (e) {
+                console.warn('Error with hardcoded verb meanings:', e);
+            }
+        }
 
         // First, try to fetch directly from the meanings API
         try {
@@ -228,7 +253,10 @@ export const fetchMeaningData = async (meaningId: string): Promise<MeaningData |
         // Try fetching from the dataset API to get complete data
         try {
             // Get the dataset to find occurrences for this meaning ID
-            const datasetUrl = isProduction ? '/api/dataset' : 'https://prevnet.sites.er.kcl.ac.uk/api/dataset';
+            // Add pagination to avoid getting cut off - request 500 records
+            const datasetUrl = isProduction
+                ? `/api/dataset?page=1&per_page=500`
+                : `https://prevnet.sites.er.kcl.ac.uk/api/dataset?page=1&per_page=500`;
             console.log(`Fetching dataset from: ${datasetUrl}`);
 
             const datasetResponse = await fetchWithRetry(datasetUrl, requestOptions);
@@ -253,20 +281,25 @@ export const fetchMeaningData = async (meaningId: string): Promise<MeaningData |
 
                     if (relevantData.length > 0) {
                         // Extract verb semantics from the first result
-                        verb_semantics = relevantData[0].verb_semantics || 'Unknown';
+                        verb_semantics = relevantData[0].verb_semantics || verb_semantics;
                         console.log('Verb semantics:', verb_semantics);
 
                         // Map the dataset records to the Occurrence interface
-                        occurrences = relevantData.map((item: DatasetRecord) => ({
-                            preverb: item.preverb || '',
-                            lemma: item.lemma || '',
-                            sentence: item.sentence || '',
-                            token: item.verb_token || '',
-                            location_url: item.whg_url || '',
-                            author: item.author || '',
-                            title: item.title || '',
-                            century: item.century || ''
-                        }));
+                        occurrences = relevantData.map((item: DatasetRecord) => {
+                            // Create a token that's more likely to match in the sentence - try both options
+                            const possibleToken = item.verb_token || `${item.preverb}${item.lemma.toLowerCase()}`;
+
+                            return {
+                                preverb: item.preverb || '',
+                                lemma: item.lemma || '',
+                                sentence: item.sentence || '',
+                                token: possibleToken,
+                                location_url: item.whg_url || '',
+                                author: item.author || '',
+                                title: item.title || '',
+                                century: item.century || ''
+                            };
+                        });
 
                         if (occurrences.length > 0) {
                             console.log(`Found ${occurrences.length} occurrences in dataset for meaning ${meaningId}`);
@@ -309,20 +342,31 @@ export const fetchMeaningData = async (meaningId: string): Promise<MeaningData |
                         console.log(`Found matching examples in preverb ${preverb}:`, matchingExamples);
 
                         // If we found matching examples, get the verb semantics
-                        verb_semantics = matchingExamples[0].verb_semantics;
+                        verb_semantics = matchingExamples[0].verb_semantics || verb_semantics;
 
                         // Create basic occurrence data from matching examples
                         matchingExamples.forEach(ex => {
-                            occurrences.push({
+                            // Add an occurrence for this example with best-effort data
+                            const occurrence: Occurrence = {
                                 preverb,
                                 lemma: ex.lemma,
-                                sentence: `${preverb}${ex.lemma}`, // Minimal fallback
+                                sentence: `${preverb}${ex.lemma}`, // Simple fallback
                                 token: `${preverb}${ex.lemma.toLowerCase()}`,
                                 location_url: '',
                                 author: '',
                                 title: '',
                                 century: ''
-                            });
+                            };
+
+                            // Only add if we don't already have this combo
+                            const alreadyExists = occurrences.some(o =>
+                                o.preverb === occurrence.preverb &&
+                                o.lemma === occurrence.lemma
+                            );
+
+                            if (!alreadyExists) {
+                                occurrences.push(occurrence);
+                            }
                         });
                     }
                 } else {
@@ -339,6 +383,16 @@ export const fetchMeaningData = async (meaningId: string): Promise<MeaningData |
             console.log(`Returning ${occurrences.length} occurrences with verb semantics: ${verb_semantics}`);
             return {
                 occurrences,
+                verb_semantics
+            };
+        }
+
+        // If we found meaning info in preverbs but no occurrences, create a minimal dataset
+        if (foundInPreverbs && verb_semantics !== 'Unknown') {
+            console.log(`Creating minimal dataset for meaning ${meaningId} with semantics ${verb_semantics}`);
+            // Return a minimal dataset with the semantics we found
+            return {
+                occurrences: [],
                 verb_semantics
             };
         }
