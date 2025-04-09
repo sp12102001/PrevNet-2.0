@@ -218,8 +218,16 @@ const PreverbDashboard = () => {
                     <TableRow key={index}>
                       <TableCell>{example.lemma}</TableCell>
                       <TableCell>
-                        <Link href={`/meaning/${encodeURIComponent(example.meaning_id)}`}>
+                        <Link
+                          href={`/meaning/${encodeURIComponent(example.meaning_id)}`}
+                          className="text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1 cursor-pointer"
+                        >
                           {example.verb_semantics}
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                            <path d="M15 3h6v6"></path>
+                            <path d="M10 14L21 3"></path>
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                          </svg>
                         </Link>
                       </TableCell>
                       <TableCell>{example.count}</TableCell>

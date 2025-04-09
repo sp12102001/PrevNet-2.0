@@ -39,6 +39,51 @@ export interface MeaningData {
     verb_semantics: string;
 }
 
+// Interface for dataset records
+export interface DatasetRecord {
+    preverb: string;
+    lemma: string;
+    sentence: string;
+    verb_token: string;
+    whg_url: string;
+    author: string;
+    title: string;
+    century: string;
+    meaning_id: string;
+    verb_semantics: string;
+    [key: string]: any; // Allow for other fields
+}
+
+// Retry configuration for API requests
+const API_RETRY_CONFIG = {
+    maxRetries: 2,
+    retryDelay: 500, // ms
+};
+
+// Helper function to retry fetch requests
+const fetchWithRetry = async (url: string, options: RequestInit, retries = API_RETRY_CONFIG.maxRetries): Promise<Response> => {
+    try {
+        const response = await fetch(url, options);
+        if (response.ok) return response;
+
+        // If response is not ok and we have retries left
+        if (retries > 0) {
+            console.warn(`Request to ${url} failed with status ${response.status}, retrying... (${retries} retries left)`);
+            await new Promise(resolve => setTimeout(resolve, API_RETRY_CONFIG.retryDelay));
+            return fetchWithRetry(url, options, retries - 1);
+        }
+
+        return response; // Return the response even if not ok to let caller handle it
+    } catch (error) {
+        if (retries > 0) {
+            console.warn(`Network error when fetching ${url}, retrying... (${retries} retries left)`, error);
+            await new Promise(resolve => setTimeout(resolve, API_RETRY_CONFIG.retryDelay));
+            return fetchWithRetry(url, options, retries - 1);
+        }
+        throw error;
+    }
+};
+
 // Debug function to log info and test endpoints
 export const debugEndpoints = async () => {
     try {
@@ -109,14 +154,16 @@ export const fetchPreverbData = async (preverb: string): Promise<PreverbData | n
         const url = `${BASE_URL}/${preverb}`;
         console.log(`Fetching data for preverb from URL: ${url}`);
 
-        const response = await fetch(url, {
+        const requestOptions: RequestInit = {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
             },
             mode: 'cors',
-        });
+        };
+
+        const response = await fetchWithRetry(url, requestOptions);
 
         console.log(`Response status: ${response.status} ${response.statusText}`);
 
@@ -140,27 +187,30 @@ export const fetchMeaningData = async (meaningId: string): Promise<MeaningData |
     try {
         console.log(`Fetching data for meaning: ${meaningId}`);
 
+        const requestOptions: RequestInit = {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            },
+            mode: 'cors',
+        };
+
         // First, try to fetch directly from the meanings API
         try {
             const detailUrl = `${MEANINGS_URL}/${meaningId}`;
             console.log(`Fetching detailed meaning data from: ${detailUrl}`);
 
-            const detailResponse = await fetch(detailUrl, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                },
-                mode: 'cors',
-            });
+            const detailResponse = await fetchWithRetry(detailUrl, requestOptions);
 
             if (detailResponse.ok) {
                 const detailData = await detailResponse.json();
 
-                if (detailData && Array.isArray(detailData.occurrences)) {
+                if (detailData && Array.isArray(detailData.occurrences) && detailData.occurrences.length > 0) {
                     console.log('Successfully fetched detailed meaning data');
                     return detailData as MeaningData;
                 }
+                console.warn('API returned success but with empty or invalid data');
             } else {
                 console.warn(`Failed to fetch meaning data: ${detailResponse.status} ${detailResponse.statusText}`);
             }
@@ -168,26 +218,65 @@ export const fetchMeaningData = async (meaningId: string): Promise<MeaningData |
             console.warn('Could not fetch data from meanings API, falling back to preverbs API:', detailError);
         }
 
-        // For each preverb, fetch its data and check if it contains the required meaning_id
+        // Try fetching from the dataset API to get complete data
+        try {
+            // Get the dataset to find occurrences for this meaning ID
+            const datasetUrl = isProduction ? '/api/dataset' : 'https://prevnet.sites.er.kcl.ac.uk/api/dataset';
+            console.log(`Fetching dataset from: ${datasetUrl}`);
+
+            const datasetResponse = await fetchWithRetry(datasetUrl, requestOptions);
+
+            if (datasetResponse.ok) {
+                const datasetData = await datasetResponse.json();
+
+                if (datasetData && Array.isArray(datasetData.data)) {
+                    // Filter for the target meaning ID
+                    const relevantData = datasetData.data.filter((item: DatasetRecord) => item.meaning_id === meaningId);
+
+                    if (relevantData.length > 0) {
+                        // Extract verb semantics from the first result
+                        const verb_semantics = relevantData[0].verb_semantics || 'Unknown';
+
+                        // Map the dataset records to the Occurrence interface
+                        const occurrences: Occurrence[] = relevantData.map((item: DatasetRecord) => ({
+                            preverb: item.preverb || '',
+                            lemma: item.lemma || '',
+                            sentence: item.sentence || '',
+                            token: item.verb_token || '',
+                            location_url: item.whg_url || '',
+                            author: item.author || '',
+                            title: item.title || '',
+                            century: item.century || ''
+                        }));
+
+                        if (occurrences.length > 0) {
+                            console.log(`Found ${occurrences.length} occurrences in dataset for meaning ${meaningId}`);
+                            return {
+                                occurrences,
+                                verb_semantics
+                            };
+                        }
+                    }
+                }
+            }
+        } catch (datasetError) {
+            console.warn('Could not fetch data from dataset API:', datasetError);
+        }
+
+        // Finally, try with individual preverbs as a last resort
         let occurrences: Occurrence[] = [];
         let verb_semantics = 'Unknown';
+        let foundInPreverbs = false;
 
-        // We'll check a few common preverbs that might contain the meaning
-        const preverbsToCheck = ['ab', 'ad', 'de', 'ex', 'in', 'pro', 'intro'];
+        // Use the full list of preverbs for more comprehensive searching
+        const preverbsToCheck = PREVERBS;
 
         for (const preverb of preverbsToCheck) {
             try {
                 const url = `${BASE_URL}/${preverb}`;
                 console.log(`Checking preverb ${preverb} for meaning ${meaningId} at URL: ${url}`);
 
-                const response = await fetch(url, {
-                    method: 'GET',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json',
-                    },
-                    mode: 'cors',
-                });
+                const response = await fetchWithRetry(url, requestOptions);
 
                 if (response.ok) {
                     const data = await response.json() as PreverbData;
@@ -196,22 +285,9 @@ export const fetchMeaningData = async (meaningId: string): Promise<MeaningData |
                     const matchingExamples = data.examples.filter(ex => ex.meaning_id === meaningId);
 
                     if (matchingExamples.length > 0) {
+                        foundInPreverbs = true;
                         // If we found matching examples, get the verb semantics
                         verb_semantics = matchingExamples[0].verb_semantics;
-
-                        // Add occurrences with sample data (since we don't have the real data)
-                        matchingExamples.forEach(ex => {
-                            occurrences.push({
-                                preverb,
-                                lemma: ex.lemma,
-                                sentence: `Example of ${preverb} + ${ex.lemma}`,
-                                token: ex.lemma,
-                                location_url: '',
-                                author: 'Cicero', // Sample author (placeholder)
-                                title: 'De Natura Deorum', // Sample title (placeholder)
-                                century: 'cent. 1 BCE' // Sample century (placeholder)
-                            });
-                        });
                     }
                 } else {
                     console.warn(`Failed to fetch preverb ${preverb}: ${response.status} ${response.statusText}`);
@@ -222,7 +298,11 @@ export const fetchMeaningData = async (meaningId: string): Promise<MeaningData |
         }
 
         if (occurrences.length === 0) {
-            console.warn(`No data found for meaning: ${meaningId}`);
+            if (foundInPreverbs) {
+                console.warn(`Found meaning in preverbs but couldn't extract occurrences: ${meaningId}`);
+            } else {
+                console.warn(`No data found for meaning: ${meaningId}`);
+            }
             return null;
         }
 

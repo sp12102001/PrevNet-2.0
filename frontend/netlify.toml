@@ -28,3 +28,11 @@
   status = 200
   force = true
   headers = {Access-Control-Allow-Origin = "*"}
+
+# Proxy API requests for dataset to KCL API
+[[redirects]]
+  from = "/api/dataset"
+  to = "https://prevnet.sites.er.kcl.ac.uk/api/dataset"
+  status = 200
+  force = true
+  headers = {Access-Control-Allow-Origin = "*"}
