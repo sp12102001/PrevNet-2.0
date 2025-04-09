@@ -29,19 +29,50 @@ export default function MeaningPage() {
     }
 
     try {
-      // Try to find the token in the sentence using case-insensitive matching
-      const tokenRegex = new RegExp(`(${token.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi');
+      // Clean up the token and sentence for better matching
+      const cleanToken = token.trim().toLowerCase();
+
+      // First, try exact match with the token
+      const tokenRegex = new RegExp(`(${cleanToken.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi');
       const parts = sentence.split(tokenRegex);
 
-      // If we couldn't split the sentence (token not found), try with just the preverb + first part of lemma
-      if (parts.length <= 1 && token.length > 2) {
-        const simplifiedToken = token.substring(0, token.length > 3 ? 3 : token.length);
-        const simplifiedRegex = new RegExp(`(${simplifiedToken.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi');
-        const simplifiedParts = sentence.split(simplifiedRegex);
+      // If we found a match with the full token, return highlighted sentence
+      if (parts.length > 1) {
+        return parts.map((part, i) => {
+          if (part.toLowerCase() === cleanToken) {
+            return <span key={i} className="font-bold text-blue-700">{part}</span>;
+          }
+          return <span key={i}>{part}</span>;
+        });
+      }
 
-        if (simplifiedParts.length > 1) {
-          return simplifiedParts.map((part, i) => {
-            if (part.toLowerCase().includes(simplifiedToken.toLowerCase())) {
+      // If exact match fails, try to match only the verb part (without preverb)
+      // First, try to split the token into preverb and base verb
+      const preverbs = [
+        'ab', 'ad', 'ante', 'circum', 'com', 'de', 'ex', 'in', 'inter',
+        'intro', 'ob', 'per', 'post', 'prae', 'praeter', 'pro', 're',
+        'sub', 'super', 'trans'
+      ];
+
+      let baseVerb = cleanToken;
+      let preverb = '';
+
+      for (const p of preverbs) {
+        if (cleanToken.startsWith(p)) {
+          preverb = p;
+          baseVerb = cleanToken.substring(p.length);
+          break;
+        }
+      }
+
+      // If we identified a preverb, try to match just the base verb
+      if (preverb && baseVerb) {
+        const baseVerbRegex = new RegExp(`(${baseVerb.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi');
+        const baseVerbParts = sentence.split(baseVerbRegex);
+
+        if (baseVerbParts.length > 1) {
+          return baseVerbParts.map((part, i) => {
+            if (part.toLowerCase() === baseVerb) {
               return <span key={i} className="font-bold text-blue-700">{part}</span>;
             }
             return <span key={i}>{part}</span>;
@@ -49,17 +80,30 @@ export default function MeaningPage() {
         }
       }
 
-      // Return the highlighted parts if we found a match
-      if (parts.length > 1) {
-        return parts.map((part, i) => {
-          if (part.toLowerCase() === token.toLowerCase()) {
-            return <span key={i} className="font-bold text-blue-700">{part}</span>;
+      // If base verb also fails, try with first 3-4 characters of the token
+      // This helps with different forms of the same verb
+      if (cleanToken.length > 3) {
+        const wordStart = cleanToken.substring(0, 4);
+        const wordStartRegex = new RegExp(`\\b(${wordStart.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}\\w*)\\b`, 'gi');
+        const matches = sentence.match(wordStartRegex);
+
+        if (matches && matches.length > 0) {
+          // Replace only the first occurrence
+          const firstMatch = matches[0];
+          const parts = sentence.split(new RegExp(`(${firstMatch.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'i'));
+
+          if (parts.length > 1) {
+            return parts.map((part, i) => {
+              if (part.toLowerCase() === firstMatch.toLowerCase()) {
+                return <span key={i} className="font-bold text-blue-700">{part}</span>;
+              }
+              return <span key={i}>{part}</span>;
+            });
           }
-          return <span key={i}>{part}</span>;
-        });
+        }
       }
 
-      // If no matches, just return the sentence as is
+      // As a last resort, just return the sentence as plain text
       return <span>{sentence}</span>;
     } catch (e) {
       console.error('Error highlighting token:', e);

@@ -20,6 +20,10 @@
   status = 200
   force = true
   headers = {Access-Control-Allow-Origin = "*"}
+  [redirects.headers]
+    X-From = "Netlify"
+  [redirects.params]
+    timeout = "120000"
 
 # Proxy API requests for meanings to KCL API
 [[redirects]]
@@ -28,6 +32,10 @@
   status = 200
   force = true
   headers = {Access-Control-Allow-Origin = "*"}
+  [redirects.headers]
+    X-From = "Netlify"
+  [redirects.params]
+    timeout = "120000"
 
 # Proxy API requests for dataset to KCL API
 [[redirects]]
@@ -36,6 +44,10 @@
   status = 200
   force = true
   headers = {Access-Control-Allow-Origin = "*"}
+  [redirects.headers]
+    X-From = "Netlify"
+  [redirects.params]
+    timeout = "120000"
 
 # Handle dataset API with query parameters
 [[redirects]]
@@ -44,3 +56,7 @@
   status = 200
   force = true
   headers = {Access-Control-Allow-Origin = "*"}
+  [redirects.headers]
+    X-From = "Netlify"
+  [redirects.params]
+    timeout = "120000"
