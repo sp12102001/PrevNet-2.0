@@ -1,5 +1,6 @@
 import { useRouter } from 'next/router';
 import { useMeaningData } from '@/services/api';
+import { useMeaningDataFromGithub } from '@/services/github-csv';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import Link from 'next/link';
 import ErrorFallback from '@/components/ErrorFallback';
@@ -9,18 +10,24 @@ export default function MeaningPage() {
   const router = useRouter();
   const { meaning_id } = router.query;
   const [hasLogged, setHasLogged] = useState(false);
+  const [useGithub, setUseGithub] = useState(true);
 
   // Add debugging for the meaning_id
   useEffect(() => {
     if (meaning_id && !hasLogged) {
       console.log('Viewing meaning page for ID:', meaning_id);
       console.log('Query params:', router.query);
+      console.log('Data source:', useGithub ? 'GitHub CSV' : 'KCL API');
       setHasLogged(true);
     }
-  }, [meaning_id, router.query, hasLogged]);
+  }, [meaning_id, router.query, hasLogged, useGithub]);
 
-  // Use our custom hook to fetch data
-  const { data, loading, error } = useMeaningData(meaning_id as string);
+  // Use either GitHub CSV or KCL API based on the toggle
+  const githubData = useMeaningDataFromGithub(useGithub ? meaning_id as string : null);
+  const apiData = useMeaningData(!useGithub ? meaning_id as string : null);
+
+  // Combine the data sources
+  const { data, loading, error } = useGithub ? githubData : apiData;
 
   // Helper to highlight tokens in sentences
   const highlightToken = (sentence: string, token: string) => {
@@ -185,6 +192,27 @@ export default function MeaningPage() {
         </svg>
         Back to Dashboard
       </Link>
+
+      {/* Data source toggle */}
+      <div className="flex items-center justify-end mb-4">
+        <span className="text-sm text-gray-500 mr-2">Data source:</span>
+        <button
+          onClick={() => setUseGithub(false)}
+          className={`px-3 py-1 text-sm rounded-l-md transition-colors ${!useGithub
+            ? 'bg-blue-600 text-white'
+            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+        >
+          KCL API
+        </button>
+        <button
+          onClick={() => setUseGithub(true)}
+          className={`px-3 py-1 text-sm rounded-r-md transition-colors ${useGithub
+            ? 'bg-blue-600 text-white'
+            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+        >
+          GitHub CSV
+        </button>
+      </div>
 
       <h1 className="text-3xl font-bold mb-2">Meaning: &quot;{data.verb_semantics}&quot;</h1>
       <p className="text-gray-500 mb-6">Found {data.occurrences.length} occurrence{data.occurrences.length !== 1 ? 's' : ''}</p>

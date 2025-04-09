@@ -9,16 +9,21 @@ The main page presents all available preverbs in an interactive dashboard. Users
 - `/frontend`: Next.js web application
 - `/backend`: Flask API server
 - `/data`: Contains the preverb dataset
+- `/docs`: Documentation files
 
 ## Prerequisites
 
 - Node.js (v18 or higher)
-- Python (v3.8 or higher)
+- Python (v3.8 or higher) - *Optional if using GitHub CSV data source*
 - npm or yarn
 
 ## Getting Started
 
-### Backend Setup
+You can run PrevNet in two ways:
+1. With the Flask backend API (original method)
+2. Using CSV files hosted on GitHub (new method, no backend required)
+
+### Option 1: Backend API Setup
 
 1. Navigate to the backend directory:
    ```bash
@@ -41,6 +46,12 @@ The main page presents all available preverbs in an interactive dashboard. Users
    python app.py
    ```
    The API will be available at http://localhost:5000
+
+### Option 2: GitHub CSV Setup (No Backend Required)
+
+1. Follow the setup instructions in [docs/github-csv-setup.md](docs/github-csv-setup.md)
+2. Update the GitHub repository information in `frontend/services/github-csv.ts`
+3. Start the frontend as normal
 
 ### Frontend Setup
 
@@ -65,6 +76,19 @@ The main page presents all available preverbs in an interactive dashboard. Users
    The application will be available at http://localhost:3000
 
 ## Development
+
+### Data Sources
+
+PrevNet supports two data sources:
+
+1. **KCL API**: The original data source that requires a backend server
+2. **GitHub CSV**: A new data source that fetches data directly from CSV files hosted on GitHub
+
+Users can toggle between these data sources in the UI.
+
+### Setting Up GitHub CSV
+
+For detailed instructions on setting up and using the GitHub CSV data source, see [docs/github-csv-setup.md](docs/github-csv-setup.md).
 
 ### Backend API
 
