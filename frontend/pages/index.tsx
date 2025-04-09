@@ -221,6 +221,7 @@ const PreverbDashboard = () => {
                         <Link
                           href={`/meaning/${encodeURIComponent(example.meaning_id)}`}
                           className="text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1 cursor-pointer"
+                          onClick={() => console.log(`Clicking meaning: ${example.meaning_id} - ${example.verb_semantics}`)}
                         >
                           {example.verb_semantics}
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">

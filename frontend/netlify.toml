@@ -31,8 +31,8 @@
 
 # Proxy API requests for dataset to KCL API
 [[redirects]]
-  from = "/api/dataset"
-  to = "https://prevnet.sites.er.kcl.ac.uk/api/dataset"
+  from = "/api/dataset*"
+  to = "https://prevnet.sites.er.kcl.ac.uk/api/dataset:splat"
   status = 200
   force = true
   headers = {Access-Control-Allow-Origin = "*"}

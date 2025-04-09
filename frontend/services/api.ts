@@ -196,6 +196,10 @@ export const fetchMeaningData = async (meaningId: string): Promise<MeaningData |
             mode: 'cors',
         };
 
+        let foundData = false;
+        let occurrences: Occurrence[] = [];
+        let verb_semantics = 'Unknown';
+
         // First, try to fetch directly from the meanings API
         try {
             const detailUrl = `${MEANINGS_URL}/${meaningId}`;
@@ -205,12 +209,15 @@ export const fetchMeaningData = async (meaningId: string): Promise<MeaningData |
 
             if (detailResponse.ok) {
                 const detailData = await detailResponse.json();
+                console.log('Meaning API response:', detailData);
 
                 if (detailData && Array.isArray(detailData.occurrences) && detailData.occurrences.length > 0) {
-                    console.log('Successfully fetched detailed meaning data');
+                    console.log('Successfully fetched detailed meaning data:', detailData.occurrences.length, 'occurrences');
+                    foundData = true;
                     return detailData as MeaningData;
+                } else {
+                    console.warn('API returned success but with empty or invalid data');
                 }
-                console.warn('API returned success but with empty or invalid data');
             } else {
                 console.warn(`Failed to fetch meaning data: ${detailResponse.status} ${detailResponse.statusText}`);
             }
@@ -228,17 +235,29 @@ export const fetchMeaningData = async (meaningId: string): Promise<MeaningData |
 
             if (datasetResponse.ok) {
                 const datasetData = await datasetResponse.json();
+                console.log('Dataset API response structure:', Object.keys(datasetData));
+                console.log('Dataset contains', datasetData.data ? datasetData.data.length : 0, 'records');
 
                 if (datasetData && Array.isArray(datasetData.data)) {
+                    // Log some sample data to understand structure
+                    if (datasetData.data.length > 0) {
+                        console.log('Dataset sample record:', datasetData.data[0]);
+                    }
+
                     // Filter for the target meaning ID
-                    const relevantData = datasetData.data.filter((item: DatasetRecord) => item.meaning_id === meaningId);
+                    const relevantData = datasetData.data.filter((item: DatasetRecord) => {
+                        return item.meaning_id === meaningId;
+                    });
+
+                    console.log(`Found ${relevantData.length} relevant records in dataset for meaning ID ${meaningId}`);
 
                     if (relevantData.length > 0) {
                         // Extract verb semantics from the first result
-                        const verb_semantics = relevantData[0].verb_semantics || 'Unknown';
+                        verb_semantics = relevantData[0].verb_semantics || 'Unknown';
+                        console.log('Verb semantics:', verb_semantics);
 
                         // Map the dataset records to the Occurrence interface
-                        const occurrences: Occurrence[] = relevantData.map((item: DatasetRecord) => ({
+                        occurrences = relevantData.map((item: DatasetRecord) => ({
                             preverb: item.preverb || '',
                             lemma: item.lemma || '',
                             sentence: item.sentence || '',
@@ -251,6 +270,7 @@ export const fetchMeaningData = async (meaningId: string): Promise<MeaningData |
 
                         if (occurrences.length > 0) {
                             console.log(`Found ${occurrences.length} occurrences in dataset for meaning ${meaningId}`);
+                            foundData = true;
                             return {
                                 occurrences,
                                 verb_semantics
@@ -258,14 +278,14 @@ export const fetchMeaningData = async (meaningId: string): Promise<MeaningData |
                         }
                     }
                 }
+            } else {
+                console.warn(`Failed to fetch dataset: ${datasetResponse.status} ${datasetResponse.statusText}`);
             }
         } catch (datasetError) {
             console.warn('Could not fetch data from dataset API:', datasetError);
         }
 
         // Finally, try with individual preverbs as a last resort
-        let occurrences: Occurrence[] = [];
-        let verb_semantics = 'Unknown';
         let foundInPreverbs = false;
 
         // Use the full list of preverbs for more comprehensive searching
@@ -286,8 +306,24 @@ export const fetchMeaningData = async (meaningId: string): Promise<MeaningData |
 
                     if (matchingExamples.length > 0) {
                         foundInPreverbs = true;
+                        console.log(`Found matching examples in preverb ${preverb}:`, matchingExamples);
+
                         // If we found matching examples, get the verb semantics
                         verb_semantics = matchingExamples[0].verb_semantics;
+
+                        // Create basic occurrence data from matching examples
+                        matchingExamples.forEach(ex => {
+                            occurrences.push({
+                                preverb,
+                                lemma: ex.lemma,
+                                sentence: `${preverb}${ex.lemma}`, // Minimal fallback
+                                token: `${preverb}${ex.lemma.toLowerCase()}`,
+                                location_url: '',
+                                author: '',
+                                title: '',
+                                century: ''
+                            });
+                        });
                     }
                 } else {
                     console.warn(`Failed to fetch preverb ${preverb}: ${response.status} ${response.statusText}`);
@@ -297,19 +333,23 @@ export const fetchMeaningData = async (meaningId: string): Promise<MeaningData |
             }
         }
 
-        if (occurrences.length === 0) {
-            if (foundInPreverbs) {
-                console.warn(`Found meaning in preverbs but couldn't extract occurrences: ${meaningId}`);
-            } else {
-                console.warn(`No data found for meaning: ${meaningId}`);
-            }
-            return null;
+        // Return data if we found occurrences from any of the methods
+        if (occurrences.length > 0) {
+            foundData = true;
+            console.log(`Returning ${occurrences.length} occurrences with verb semantics: ${verb_semantics}`);
+            return {
+                occurrences,
+                verb_semantics
+            };
         }
 
-        return {
-            occurrences,
-            verb_semantics
-        };
+        // Only reach here if we couldn't find data in any source
+        if (foundInPreverbs) {
+            console.warn(`Found meaning in preverbs but couldn't extract occurrences: ${meaningId}`);
+        } else {
+            console.warn(`No data found for meaning: ${meaningId}`);
+        }
+        return null;
 
     } catch (error) {
         console.error(`Error fetching data for meaning ${meaningId}:`, error);
