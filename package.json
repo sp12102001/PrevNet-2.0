@@ -1,0 +1,24 @@
+{
+    "name": "prevnet",
+    "version": "1.0.0",
+    "description": "Preverb Analysis Tool",
+    "main": "index.js",
+    "scripts": {
+        "start": "cd frontend && npm run dev",
+        "start:backend": "cd backend && python3 app.py",
+        "start:all": "concurrently \"npm run start:backend\" \"npm run start\"",
+        "dev": "cd frontend && npm run dev",
+        "build": "cd frontend && npm run build",
+        "build-prod": "cd frontend && npm run build",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {},
+    "devDependencies": {
+        "concurrently": "^8.2.2"
+    },
+    "workspaces": [
+        "frontend"
+    ]
+}

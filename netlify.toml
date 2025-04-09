@@ -1,0 +1,22 @@
+[build]
+  base = "frontend/"
+  publish = ".next/"
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "18"
+  NPM_VERSION = "9"
+
+# Handle SPA routing
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Proxy API requests to KCL API to avoid CORS issues
+[[redirects]]
+  from = "/api/preverbs/*"
+  to = "https://prevnet.sites.er.kcl.ac.uk/api/preverbs/:splat"
+  status = 200
+  force = true
+  headers = {Access-Control-Allow-Origin = "*"}

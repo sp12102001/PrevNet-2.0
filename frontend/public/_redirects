@@ -1,0 +1,4 @@
+# Redirect all API calls to the actual API
+/api/preverbs/*  https://prevnet.sites.er.kcl.ac.uk/api/preverbs/:splat  200
+# Redirect all other routes to index.html for client-side routing
+/*  /index.html  200
