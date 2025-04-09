@@ -11,6 +11,11 @@ const BASE_URL = isProduction
     ? '/api/preverbs'  // This will use the Netlify proxy
     : 'https://prevnet.sites.er.kcl.ac.uk/api/preverbs';
 
+// URL for meanings endpoint
+const MEANINGS_URL = isProduction
+    ? '/api/meanings'  // This will use the Netlify proxy
+    : 'https://prevnet.sites.er.kcl.ac.uk/api/meanings';
+
 export interface PreverbData {
     verbal_bases: { [key: string]: number };
     meanings: { [key: string]: number };
@@ -135,6 +140,34 @@ export const fetchMeaningData = async (meaningId: string): Promise<MeaningData |
     try {
         console.log(`Fetching data for meaning: ${meaningId}`);
 
+        // First, try to fetch directly from the meanings API
+        try {
+            const detailUrl = `${MEANINGS_URL}/${meaningId}`;
+            console.log(`Fetching detailed meaning data from: ${detailUrl}`);
+
+            const detailResponse = await fetch(detailUrl, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                mode: 'cors',
+            });
+
+            if (detailResponse.ok) {
+                const detailData = await detailResponse.json();
+
+                if (detailData && Array.isArray(detailData.occurrences)) {
+                    console.log('Successfully fetched detailed meaning data');
+                    return detailData as MeaningData;
+                }
+            } else {
+                console.warn(`Failed to fetch meaning data: ${detailResponse.status} ${detailResponse.statusText}`);
+            }
+        } catch (detailError) {
+            console.warn('Could not fetch data from meanings API, falling back to preverbs API:', detailError);
+        }
+
         // For each preverb, fetch its data and check if it contains the required meaning_id
         let occurrences: Occurrence[] = [];
         let verb_semantics = 'Unknown';
@@ -165,33 +198,6 @@ export const fetchMeaningData = async (meaningId: string): Promise<MeaningData |
                     if (matchingExamples.length > 0) {
                         // If we found matching examples, get the verb semantics
                         verb_semantics = matchingExamples[0].verb_semantics;
-
-                        // Try to fetch additional details from the API if possible
-                        try {
-                            // The API might return detailed data with the meaning_id
-                            const detailUrl = `${BASE_URL}/meaning/${meaningId}`;
-                            const detailResponse = await fetch(detailUrl, {
-                                method: 'GET',
-                                headers: {
-                                    'Accept': 'application/json',
-                                    'Content-Type': 'application/json',
-                                },
-                                mode: 'cors',
-                            });
-
-                            if (detailResponse.ok) {
-                                const detailData = await detailResponse.json();
-
-                                // Check if the API returned detailed occurrences
-                                if (detailData && Array.isArray(detailData.occurrences)) {
-                                    occurrences = detailData.occurrences;
-                                    console.log('Using detailed occurrences from API');
-                                    break; // No need to check other preverbs
-                                }
-                            }
-                        } catch (detailError) {
-                            console.warn('Could not fetch detailed data for meaning, using basic data:', detailError);
-                        }
 
                         // Add occurrences with sample data (since we don't have the real data)
                         matchingExamples.forEach(ex => {

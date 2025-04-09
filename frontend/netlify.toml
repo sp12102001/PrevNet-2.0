@@ -20,3 +20,11 @@
   status = 200
   force = true
   headers = {Access-Control-Allow-Origin = "*"}
+
+# Proxy API requests for meanings to KCL API
+[[redirects]]
+  from = "/api/meanings/*"
+  to = "https://prevnet.sites.er.kcl.ac.uk/api/meanings/:splat"
+  status = 200
+  force = true
+  headers = {Access-Control-Allow-Origin = "*"}

@@ -17,35 +17,36 @@ def home():
 
 @app.route('/api/preverbs', methods=['GET'])
 def get_preverbs():
-    preverbs = df['preverb'].unique().tolist()  # Get all unique preverbs
-    preverbs.sort()  # Sort the preverbs in alphabetical order
+    preverbs = sorted(df['preverb'].unique().tolist())  # Get unique preverbs and sort them
     return jsonify(preverbs)  # Return the sorted list as JSON
 
 @app.route('/api/preverbs/<preverb>', methods=['GET'])
 def get_preverb_statistics(preverb):
     filtered_df = df[df['preverb'] == preverb]
-    
+
     # Get verbal bases statistics
     # verbal_bases = filtered_df['verbal_base'].value_counts().to_dict()
     lemmas = filtered_df['lemma'].value_counts().to_dict()
     # sort by counts (decreasing)
     lemmas = dict(sorted(lemmas.items(), key=lambda item: item[1], reverse=True))
-    
+
     # Get meanings statistics
     meanings = filtered_df['verb_semantics'].value_counts().to_dict()
     # sort by counts (decreasing)
     meanings = dict(sorted(meanings.items(), key=lambda item: item[1], reverse=True))
-    
+
     # Get total occurrences
     total_occurrences = len(filtered_df)
-    
+
     # Get all examples
-    examples = filtered_df[['lemma', 'meaning_id', 'verb_semantics']].to_dict('records')
-    # Get unique examples and their counts
-    examples = pd.DataFrame(examples).groupby(['lemma', 'meaning_id', 'verb_semantics']).size().reset_index(name='count')
-    # Ensure that the examples are sorted by counts (decreasing)
-    examples = examples.sort_values(by='count', ascending=False).to_dict('records')
-    
+    # Get examples with counts
+    examples = (filtered_df.groupby(['lemma', 'meaning_id', 'verb_semantics'])
+               .size()
+               .reset_index()
+               .rename(columns={0: 'count'})
+               .sort_values('count', ascending=False)
+               .to_dict('records'))
+
     return jsonify({
         'verbal_bases': lemmas,
         'meanings': meanings,
@@ -70,7 +71,10 @@ def get_meaning_occurrences(meaning_id):
             'lemma': row['lemma'],
             'sentence': row['sentence'],
             'token': row['verb_token'],
-            'location_url': row['whg_url']
+            'location_url': row['whg_url'],
+            'author': row['author'],
+            'title': row['title'],
+            'century': row['century']
         })
 
     # add verb semantics to the response
@@ -85,13 +89,13 @@ def get_full_dataset():
     # Return the full dataset with pagination
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 50, type=int)
-    
+
     start_idx = (page - 1) * per_page
     end_idx = start_idx + per_page
-    
+
     total_records = len(df)
     records = df.iloc[start_idx:end_idx].to_dict('records')
-    
+
     return jsonify({
         'data': records,
         'total': total_records,
