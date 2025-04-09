@@ -5,9 +5,30 @@ This guide will help you run the PrevNet frontend application which now uses the
 ## Prerequisites
 
 Make sure you have the following installed:
-- Node.js (version 14 or higher)
-- npm (comes with Node.js)
+- Node.js (version 20 or higher) - required for Next.js 15 and React 19
+- npm (version 10 or higher) - comes with Node.js 20+
 - Internet connection (required to access the KCL API)
+
+### Node.js Version Management
+
+This project requires Node.js 20+. We've included version specifications in these files:
+- `package.json`: Includes engines field specifying Node.js 20+
+- `.nvmrc`: For nvm users, run `nvm use` in the project directory
+- `.node-version`: For nodenv and other version managers
+
+If you don't have Node.js 20+ installed, you can:
+- Download and install from [Node.js official website](https://nodejs.org/)
+- Use a version manager like nvm:
+  ```bash
+  # Install nvm (if you don't have it)
+  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+
+  # Install Node.js 20
+  nvm install 20
+
+  # Use Node.js 20 for this project
+  nvm use 20
+  ```
 
 ## Running the Application
 

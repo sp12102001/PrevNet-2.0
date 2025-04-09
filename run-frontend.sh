@@ -10,8 +10,41 @@ echo ""
 # Check if node is installed
 if ! command -v node &> /dev/null; then
     echo "Error: Node.js is not installed. Please install Node.js before running this script."
-    echo "Visit https://nodejs.org/ to download and install Node.js."
+    echo "Visit https://nodejs.org/ to download and install Node.js 20 or higher."
     exit 1
+fi
+
+# Check Node.js version
+NODE_VERSION=$(node -v | cut -d 'v' -f 2)
+NODE_MAJOR_VERSION=$(echo $NODE_VERSION | cut -d '.' -f 1)
+
+if [ "$NODE_MAJOR_VERSION" -lt 20 ]; then
+    echo "Error: This application requires Node.js version 20 or higher."
+    echo "Current version: $NODE_VERSION"
+    echo ""
+    echo "To upgrade Node.js, you can:"
+    echo "1. Download the latest version from https://nodejs.org/"
+    echo "2. Use a version manager like nvm:"
+    echo "   nvm install 20"
+    echo "   nvm use 20"
+    echo ""
+    echo "After upgrading Node.js, run this script again."
+    exit 1
+fi
+
+echo "Node.js version: $NODE_VERSION (✓)"
+
+# Check npm version
+NPM_VERSION=$(npm -v)
+NPM_MAJOR_VERSION=$(echo $NPM_VERSION | cut -d '.' -f 1)
+
+if [ "$NPM_MAJOR_VERSION" -lt 10 ]; then
+    echo "Warning: This application works best with npm version 10 or higher."
+    echo "Current npm version: $NPM_VERSION"
+    echo "Continuing anyway, but you may want to upgrade npm later."
+    echo ""
+else
+    echo "npm version: $NPM_VERSION (✓)"
 fi
 
 echo "Installing root dependencies..."
