@@ -1,12 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-// Map endpoint keys to URLs
-const ENDPOINTS = {
-    preverbs: 'https://api.csvgetter.com/82Nuk0RE9PM52hY6pZul',
-    lg_preverbs: 'https://api.csvgetter.com/ciSlBjZOU5igv0UWp2Ix',
-    mock_data: 'https://api.csvgetter.com/8fQIxZDSxvYUtKGPCSIa'
-};
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     // Only allow GET requests
     if (req.method !== 'GET') {
