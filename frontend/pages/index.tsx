@@ -46,7 +46,10 @@ const PreverbDashboard = () => {
   }, [preverbs, preverbsLoading, preverbsError, selectedPreverb, preverbData, preverbDataLoading, preverbDataError]);
 
   const prepareChartData = (data: { [key: string]: number } = {}) => {
-    return Object.entries(data || {}).map(([name, value]) => ({
+    if (!data || Object.keys(data).length === 0) {
+      return [];
+    }
+    return Object.entries(data).map(([name, value]) => ({
       name,
       value
     }));
@@ -72,189 +75,196 @@ const PreverbDashboard = () => {
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-6">Preverb Analysis Dashboard</h1>
+    <div>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Preverb Analysis</h1>
+      </div>
 
       {preverbsLoading && <LoadingSpinner />}
       {preverbsError && !preverbsLoading && preverbs.length > 0 && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          <p className="font-bold">Error loading preverbs:</p>
+          <p className="font-bold">Error loading all preverbs:</p>
           <p>{preverbsError.message}</p>
+          <p className="mt-2">Showing available preverbs only.</p>
         </div>
       )}
 
       {!preverbsLoading && preverbs.length === 0 && !preverbsError && (
         <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
-          <p>No preverbs found. Please check your connection to the API.</p>
+          <p>No preverbs found. Please check your connection to the KCL API.</p>
         </div>
       )}
 
       {preverbs.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
-          {preverbs.map(preverb => (
-            <button
-              key={preverb}
-              onClick={() => setSelectedPreverb(preverb)}
-              className={`p-2 rounded ${selectedPreverb === preverb
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-200 hover:bg-gray-300'
-                }`}
-            >
-              {preverb}
-            </button>
-          ))}
-        </div>
-      )}
+        <div className="space-y-8">
+          <div className="bg-card border border-border rounded-lg shadow-sm p-5">
+            <h2 className="text-xl font-semibold mb-5 text-card-foreground">Available Preverbs</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2 sm:gap-3">
+              {preverbs.map(preverb => (
+                <button
+                  key={preverb}
+                  onClick={() => setSelectedPreverb(preverb)}
+                  className={`p-2 rounded-md transition-colors ${selectedPreverb === preverb
+                    ? 'bg-primary text-primary-foreground font-medium'
+                    : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                    }`}
+                >
+                  {preverb}
+                </button>
+              ))}
+            </div>
+          </div>
 
-      {preverbDataLoading && <LoadingSpinner />}
+          {preverbDataLoading && <LoadingSpinner />}
 
-      {preverbDataError && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          <p className="font-bold">Error loading preverb data:</p>
-          <p>{preverbDataError.message}</p>
-          <button
-            className="mt-3 bg-red-200 hover:bg-red-300 text-red-800 py-1 px-3 rounded"
-            onClick={() => window.location.reload()}
-          >
-            Try again
-          </button>
-        </div>
-      )}
+          {preverbDataError && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+              <p className="font-bold">Error loading preverb data:</p>
+              <p>{preverbDataError.message}</p>
+              <button
+                className="mt-3 bg-red-200 hover:bg-red-300 text-red-800 py-1 px-3 rounded"
+                onClick={() => window.location.reload()}
+              >
+                Try again
+              </button>
+            </div>
+          )}
 
-      {selectedPreverb && preverbData && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Verbal Bases Distribution</CardTitle>
-              <CardDescription>
-                Most common verbal bases used with &quot;{selectedPreverb}&quot;
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {hasVerbalBasesData ? (
-                <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={prepareChartData(preverbData.verbal_bases)}
-                        dataKey="value"
-                        nameKey="name"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={100}
-                        label
-                      >
-                        {prepareChartData(preverbData.verbal_bases).map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              ) : (
-                <div className="flex justify-center items-center h-[300px] text-gray-500">
-                  No verbal bases data available
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          {selectedPreverb && preverbData && (
+            <div className="space-y-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card className="shadow-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle>Verbal Bases Distribution</CardTitle>
+                    <CardDescription>
+                      Most common verbal bases used with &quot;{selectedPreverb}&quot;
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {hasVerbalBasesData ? (
+                      <div className="h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={prepareChartData(preverbData.verbal_bases)}
+                              dataKey="value"
+                              nameKey="name"
+                              cx="50%"
+                              cy="50%"
+                              outerRadius={100}
+                              label
+                            >
+                              {prepareChartData(preverbData.verbal_bases).map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                    ) : (
+                      <div className="flex justify-center items-center h-[300px] text-muted-foreground">
+                        No verbal bases data available
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Meanings Distribution</CardTitle>
-              <CardDescription>
-                Different meanings associated with &quot;{selectedPreverb}&quot;
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {hasMeaningsData ? (
-                <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={prepareChartData(preverbData.meanings)}
-                        dataKey="value"
-                        nameKey="name"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={100}
-                        label
-                      >
-                        {prepareChartData(preverbData.meanings).map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              ) : (
-                <div className="flex justify-center items-center h-[300px] text-gray-500">
-                  No meanings data available
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                <Card className="shadow-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle>Meanings Distribution</CardTitle>
+                    <CardDescription>
+                      Different meanings associated with &quot;{selectedPreverb}&quot;
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {hasMeaningsData ? (
+                      <div className="h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={prepareChartData(preverbData.meanings)}
+                              dataKey="value"
+                              nameKey="name"
+                              cx="50%"
+                              cy="50%"
+                              outerRadius={100}
+                              label
+                            >
+                              {prepareChartData(preverbData.meanings).map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                    ) : (
+                      <div className="flex justify-center items-center h-[300px] text-muted-foreground">
+                        No meanings data available
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
 
-          <Card className="col-span-1 lg:col-span-2">
-            <CardHeader>
-              <CardTitle>Examples</CardTitle>
-              <CardDescription>
-                Total occurrences: {preverbData.total_occurrences}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Verbal Base</TableHead>
-                    <TableHead>Meaning</TableHead>
-                    <TableHead>Count</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {preverbData.examples.map((example, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{example.lemma}</TableCell>
-                      <TableCell>
-                        <Link
-                          href={`/meaning/${encodeURIComponent(example.meaning_id)}`}
-                          className="text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1 cursor-pointer relative group"
-                          onClick={() => {
-                            console.log(`Clicking meaning: ${example.meaning_id} - ${example.verb_semantics}`);
-                            // Track this click in localStorage to help with debugging
-                            try {
-                              const clicks = JSON.parse(localStorage.getItem('meaningClicks') || '[]');
-                              clicks.push({
-                                meaningId: example.meaning_id,
-                                semantics: example.verb_semantics,
-                                timestamp: new Date().toISOString()
-                              });
-                              localStorage.setItem('meaningClicks', JSON.stringify(clicks.slice(-20)));
-                            } catch (e) {
-                              console.error('Error tracking click:', e);
-                            }
-                          }}
-                        >
-                          <span>{example.verb_semantics}</span>
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                            <path d="M15 3h6v6"></path>
-                            <path d="M10 14L21 3"></path>
-                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                          </svg>
-                          <span className="absolute bottom-full left-0 mb-2 hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap">
-                            View meaning ID: {example.meaning_id}
-                          </span>
-                        </Link>
-                      </TableCell>
-                      <TableCell>{example.count}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+              <Card className="shadow-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle>Examples</CardTitle>
+                  <CardDescription>
+                    Total occurrences: {preverbData.total_occurrences || 0}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {preverbData.examples && preverbData.examples.length > 0 ? (
+                    <div className="overflow-auto rounded-md border">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-[120px]">Verbal Base</TableHead>
+                            <TableHead>Meaning</TableHead>
+                            <TableHead className="w-[80px] text-right">Count</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {preverbData.examples.map((example, index) => (
+                            <TableRow key={index}>
+                              <TableCell className="font-medium">{example.lemma || 'Unknown'}</TableCell>
+                              <TableCell>
+                                {example.meaning_id ? (
+                                  <Link
+                                    href={`/meaning/${encodeURIComponent(example.meaning_id)}`}
+                                    className="text-primary hover:text-primary/80 hover:underline flex items-center gap-1 cursor-pointer relative group"
+                                  >
+                                    <span>{example.verb_semantics || 'Unknown meaning'}</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                                      <path d="M15 3h6v6"></path>
+                                      <path d="M10 14L21 3"></path>
+                                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                    </svg>
+                                    <span className="absolute bottom-full left-0 mb-2 hidden group-hover:block bg-card border border-border text-card-foreground text-xs rounded px-2 py-1 whitespace-nowrap shadow-sm z-10">
+                                      View meaning ID: {example.meaning_id}
+                                    </span>
+                                  </Link>
+                                ) : (
+                                  <span>{example.verb_semantics || 'Unknown meaning'}</span>
+                                )}
+                              </TableCell>
+                              <TableCell className="text-right">{example.count || 0}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  ) : (
+                    <div className="py-8 text-center text-muted-foreground">
+                      No examples available for this preverb
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
       )}
     </div>

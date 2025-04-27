@@ -1,20 +1,8 @@
 import { useEffect, useState } from 'react';
 
-// Available preverbs endpoints from prevnet.sites.er.kcl.ac.uk
-const PREVERBS = [
-    'ab', 'ad', 'ante', 'circum', 'com', 'de', 'ex', 'in', 'inter', 'intro', 'ob', 'per', 'post', 'prae', 'praeter', 'pro', 're', 'sub', 'super', 'trans'
-];
-
-// Use direct KCL API URL in development, or the proxied URL in production
-const isProduction = process.env.NODE_ENV === 'production';
-const BASE_URL = isProduction
-    ? '/api/preverbs'  // This will use the Netlify proxy
-    : 'https://prevnet.sites.er.kcl.ac.uk/api/preverbs';
-
-// URL for meanings endpoint
-const MEANINGS_URL = isProduction
-    ? '/api/meanings'  // This will use the Netlify proxy
-    : 'https://prevnet.sites.er.kcl.ac.uk/api/meanings';
+// Original KCL API endpoints
+const KCL_PREVERBS_URL = 'https://prevnet.sites.er.kcl.ac.uk/api/preverbs';
+const KCL_MEANINGS_URL = 'https://prevnet.sites.er.kcl.ac.uk/api/meanings';
 
 export interface PreverbData {
     verbal_bases: { [key: string]: number };
@@ -68,7 +56,7 @@ const fetchWithRetry = async (url: string, options: RequestInit, retries = API_R
     const timeoutId = setTimeout(() => controller.abort(), API_RETRY_CONFIG.timeout);
 
     try {
-        const fetchOptions = {
+        const fetchOptions: RequestInit = {
             ...options,
             signal: controller.signal
         };
@@ -81,7 +69,7 @@ const fetchWithRetry = async (url: string, options: RequestInit, retries = API_R
         // If response is not ok and we have retries left
         if (retries > 0) {
             console.warn(`Request to ${url} failed with status ${response.status}, retrying... (${retries} retries left)`);
-            await new Promise(resolve => setTimeout(resolve, API_RETRY_CONFIG.retryDelay));
+            await new Promise<void>(resolve => setTimeout(resolve, API_RETRY_CONFIG.retryDelay));
             return fetchWithRetry(url, options, retries - 1);
         }
 
@@ -96,7 +84,7 @@ const fetchWithRetry = async (url: string, options: RequestInit, retries = API_R
 
         if (retries > 0) {
             console.warn(`Network error when fetching ${url}, retrying... (${retries} retries left)`, error);
-            await new Promise(resolve => setTimeout(resolve, API_RETRY_CONFIG.retryDelay));
+            await new Promise<void>(resolve => setTimeout(resolve, API_RETRY_CONFIG.retryDelay));
             return fetchWithRetry(url, options, retries - 1);
         }
         throw error;
@@ -107,23 +95,23 @@ const fetchWithRetry = async (url: string, options: RequestInit, retries = API_R
 export const debugEndpoints = async () => {
     try {
         console.log('Debugging endpoints...');
-        console.log('Using base URL:', BASE_URL);
+        console.log('Using KCL API via proxy');
 
-        // Test direct access to KCL API
+        // Test access to KCL API via proxy
         try {
-            const testUrl = `${BASE_URL}/intro`;
-            console.log(`Testing direct access to KCL API: ${testUrl}`);
+            const targetUrl = `${KCL_PREVERBS_URL}/intro`;
+            const proxyUrl = `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
+            console.log(`Testing proxy access to KCL API: ${proxyUrl}`);
 
-            const response = await fetch(testUrl, {
+            const response = await fetch(proxyUrl, {
                 method: 'GET',
                 headers: {
                     'Accept': 'application/json',
                     'Content-Type': 'application/json'
-                },
-                mode: 'cors'
+                }
             });
 
-            console.log(`Direct KCL API response: ${response.status} ${response.statusText}`);
+            console.log(`Proxy response: ${response.status} ${response.statusText}`);
 
             if (!response.ok) {
                 throw new Error(`API responded with status ${response.status}`);
@@ -137,9 +125,10 @@ export const debugEndpoints = async () => {
             // Try with a different preverb as fallback
             try {
                 console.log('Trying fallback with a different preverb...');
-                const fallbackUrl = `${BASE_URL}/ab`;
+                const fallbackTargetUrl = `${KCL_PREVERBS_URL}/ab`;
+                const fallbackProxyUrl = `/api/proxy?url=${encodeURIComponent(fallbackTargetUrl)}`;
 
-                const fallbackResponse = await fetch(fallbackUrl);
+                const fallbackResponse = await fetch(fallbackProxyUrl);
                 console.log(`Fallback response: ${fallbackResponse.status} ${fallbackResponse.statusText}`);
 
                 if (fallbackResponse.ok) {
@@ -155,23 +144,71 @@ export const debugEndpoints = async () => {
     }
 };
 
-// Fetch all preverbs
+// Get a list of available preverbs from the KCL API
 export const fetchPreverbs = async (): Promise<string[]> => {
     try {
-        console.log('Returning hardcoded list of preverbs');
-        // Return the hardcoded list of preverbs
-        return PREVERBS.sort();
+        // Try to fetch the list of available preverbs from KCL API
+        const targetUrl = KCL_PREVERBS_URL;
+        const url = `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
+        console.log(`Fetching available preverbs via proxy: ${url}`);
+
+        const requestOptions: RequestInit = {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            }
+        };
+
+        const response = await fetchWithRetry(url, requestOptions);
+
+        if (response.ok) {
+            const data = await response.json();
+            if (Array.isArray(data) && data.length > 0) {
+                console.log(`Received ${data.length} preverbs from API`);
+                return data.sort();
+            }
+        }
+
+        console.warn(`Failed to fetch preverbs list, status: ${response.status}`);
+
+        // Fallback: Try a few known preverbs to see which ones work
+        const knownPreverbs = ['ab', 'ad', 'in', 'ex', 'per', 'com', 'de', 'pro', 're', 'trans'];
+        const availablePreverbs = [];
+
+        for (const preverb of knownPreverbs) {
+            try {
+                const testTargetUrl = `${KCL_PREVERBS_URL}/${preverb}`;
+                const testUrl = `/api/proxy?url=${encodeURIComponent(testTargetUrl)}`;
+                const testResponse = await fetch(testUrl, { method: 'GET' });
+                if (testResponse.ok) {
+                    availablePreverbs.push(preverb);
+                }
+            } catch (err) {
+                console.warn(`Error checking preverb ${preverb}:`, err);
+            }
+        }
+
+        if (availablePreverbs.length > 0) {
+            console.log(`Found ${availablePreverbs.length} available preverbs through testing`);
+            return availablePreverbs.sort();
+        }
+
+        // Last resort fallback: try only a couple of definitely known preverbs
+        return ['ab', 'in'].sort();
     } catch (error) {
         console.error('Error fetching preverbs:', error);
-        return [];
+        // Return minimal set if everything fails
+        return ['ab'];
     }
 };
 
 // Fetch data for a specific preverb
 export const fetchPreverbData = async (preverb: string): Promise<PreverbData | null> => {
     try {
-        const url = `${BASE_URL}/${preverb}`;
-        console.log(`Fetching data for preverb from URL: ${url}`);
+        const targetUrl = `${KCL_PREVERBS_URL}/${preverb}`;
+        const url = `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
+        console.log(`Fetching data for preverb via proxy: ${url}`);
 
         const requestOptions: RequestInit = {
             method: 'GET',
@@ -179,7 +216,6 @@ export const fetchPreverbData = async (preverb: string): Promise<PreverbData | n
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
             },
-            mode: 'cors',
         };
 
         const response = await fetchWithRetry(url, requestOptions);
@@ -193,8 +229,13 @@ export const fetchPreverbData = async (preverb: string): Promise<PreverbData | n
         const data = await response.json();
         console.log(`Received data for preverb ${preverb}:`, data);
 
-        // The KCL API already returns data in the expected format
-        return data as PreverbData;
+        // Ensure data has all required fields, providing defaults for missing data
+        return {
+            verbal_bases: data.verbal_bases || {},
+            meanings: data.meanings || {},
+            total_occurrences: data.total_occurrences || 0,
+            examples: Array.isArray(data.examples) ? data.examples : []
+        };
     } catch (error) {
         console.error(`Error fetching data for preverb ${preverb}:`, error);
         return null;
@@ -203,10 +244,12 @@ export const fetchPreverbData = async (preverb: string): Promise<PreverbData | n
 
 // Fetch data for a specific meaning
 export const fetchMeaningData = async (meaningId: string): Promise<MeaningData | null> => {
-    if (!meaningId) return null;
-
     try {
-        console.log(`Fetching data for meaning: ${meaningId}`);
+        // Handle special characters in meaning IDs
+        const safeId = meaningId.replace(/#/g, '%23');
+        const targetUrl = `${KCL_MEANINGS_URL}/${safeId}`;
+        const url = `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
+        console.log(`Fetching data for meaning via proxy: ${url}`);
 
         const requestOptions: RequestInit = {
             method: 'GET',
@@ -214,278 +257,130 @@ export const fetchMeaningData = async (meaningId: string): Promise<MeaningData |
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
             },
-            mode: 'cors',
         };
 
-        let foundData = false;
-        let occurrences: Occurrence[] = [];
-        let verb_semantics = 'Unknown';
+        const response = await fetchWithRetry(url, requestOptions);
+        const responseData = await response.json();
 
-        // First, try to fetch directly from the meanings API
-        try {
-            const detailUrl = `${MEANINGS_URL}/${meaningId}`;
-            console.log(`Fetching detailed meaning data from: ${detailUrl}`);
-
-            const detailResponse = await fetchWithRetry(detailUrl, requestOptions);
-
-            if (detailResponse.ok) {
-                const detailData = await detailResponse.json();
-                console.log('Meaning API response:', detailData);
-
-                if (detailData && detailData.verb_semantics) {
-                    verb_semantics = detailData.verb_semantics;
-                }
-
-                if (detailData && Array.isArray(detailData.occurrences) && detailData.occurrences.length > 0) {
-                    console.log('Successfully fetched detailed meaning data:', detailData.occurrences.length, 'occurrences');
-
-                    // Ensure all fields are properly mapped
-                    const mappedOccurrences = detailData.occurrences.map((item: any) => ({
-                        preverb: item.preverb || '',
-                        lemma: item.lemma || '',
-                        sentence: item.sentence || '',
-                        token: item.token || '',
-                        location_url: item.location_url || '',
-                        author: item.author || '',
-                        title: item.title || '',
-                        century: item.century || ''
-                    }));
-
-                    return {
-                        occurrences: mappedOccurrences,
-                        verb_semantics
-                    };
-                } else {
-                    console.warn('API returned success but with empty or invalid data');
-                }
-            } else {
-                console.warn(`Failed to fetch meaning data: ${detailResponse.status} ${detailResponse.statusText}`);
-            }
-        } catch (detailError) {
-            console.warn('Could not fetch data from meanings API, falling back to dataset API:', detailError);
+        // Check for API-level errors
+        if (!response.ok || responseData.error) {
+            console.warn(`API error for meaning ${meaningId}:`, responseData);
+            throw new Error(`Failed to fetch data for meaning: ${meaningId}. ${responseData.error || response.statusText}`);
         }
 
-        // Next, try fetching from the dataset API
-        try {
-            // We need to examine what columns are available in the CSV
-            const datasetUrl = isProduction
-                ? `/api/dataset?page=1&per_page=1000`
-                : `https://prevnet.sites.er.kcl.ac.uk/api/dataset?page=1&per_page=1000`;
-            console.log(`Fetching dataset from: ${datasetUrl}`);
+        console.log(`Received data for meaning ${meaningId}:`, responseData);
 
-            const datasetResponse = await fetchWithRetry(datasetUrl, requestOptions);
-
-            if (datasetResponse.ok) {
-                const datasetData = await datasetResponse.json();
-                console.log('Dataset API response structure:', Object.keys(datasetData));
-                console.log('Dataset contains', datasetData.data ? datasetData.data.length : 0, 'records');
-
-                if (datasetData && Array.isArray(datasetData.data)) {
-                    // Log some sample data to understand structure
-                    if (datasetData.data.length > 0) {
-                        console.log('Dataset sample record:', datasetData.data[0]);
-                    }
-
-                    // Filter for the target meaning ID
-                    const relevantData = datasetData.data.filter((item: DatasetRecord) => {
-                        return item.meaning_id === meaningId;
-                    });
-
-                    console.log(`Found ${relevantData.length} relevant records in dataset for meaning ID ${meaningId}`);
-
-                    if (relevantData.length > 0) {
-                        // Extract verb semantics from the first result
-                        verb_semantics = relevantData[0].verb_semantics || verb_semantics;
-                        console.log('Verb semantics:', verb_semantics);
-
-                        // Map the dataset records to the Occurrence interface
-                        occurrences = relevantData.map((item: DatasetRecord) => {
-                            // Use the verb_token field for better token highlighting
-                            const token = item.verb_token || `${item.preverb}${item.lemma.toLowerCase()}`;
-
-                            return {
-                                preverb: item.preverb || '',
-                                lemma: item.lemma || '',
-                                sentence: item.sentence || '',
-                                token: token,
-                                location_url: item.whg_url || '',
-                                author: item.author || '',
-                                title: item.title || '',
-                                century: item.century || ''
-                            };
-                        });
-
-                        if (occurrences.length > 0) {
-                            console.log(`Found ${occurrences.length} occurrences in dataset for meaning ${meaningId}`);
-                            foundData = true;
-                            return {
-                                occurrences,
-                                verb_semantics
-                            };
-                        }
-                    }
-                }
-            } else {
-                console.warn(`Failed to fetch dataset: ${datasetResponse.status} ${datasetResponse.statusText}`);
-            }
-        } catch (datasetError) {
-            console.warn('Could not fetch data from dataset API:', datasetError);
-        }
-
-        // Only continue with preverb fallback if we haven't found data yet
-        if (foundData) {
-            return {
-                occurrences,
-                verb_semantics
-            };
-        }
-
-        // As a last resort, try the individual preverbs approach
-        let foundInPreverbs = false;
-        const preverbsToCheck = PREVERBS;
-
-        for (const preverb of preverbsToCheck) {
-            try {
-                const url = `${BASE_URL}/${preverb}`;
-                console.log(`Checking preverb ${preverb} for meaning ${meaningId} at URL: ${url}`);
-
-                const response = await fetchWithRetry(url, requestOptions);
-
-                if (response.ok) {
-                    const data = await response.json() as PreverbData;
-
-                    // Check if any examples match the meaning_id
-                    const matchingExamples = data.examples.filter(ex => ex.meaning_id === meaningId);
-
-                    if (matchingExamples.length > 0) {
-                        foundInPreverbs = true;
-                        console.log(`Found matching examples in preverb ${preverb}:`, matchingExamples);
-
-                        // If we found matching examples, get the verb semantics
-                        verb_semantics = matchingExamples[0].verb_semantics || verb_semantics;
-                    }
-                } else {
-                    console.warn(`Failed to fetch preverb ${preverb}: ${response.status} ${response.statusText}`);
-                }
-            } catch (err) {
-                console.warn(`Error checking preverb ${preverb} for meaning ${meaningId}:`, err);
-            }
-        }
-
-        // If we didn't find any direct occurrences but we found the meaning in preverbs data
-        if (foundInPreverbs && occurrences.length === 0) {
-            console.log(`Found meaning in preverbs but no direct occurrences: ${meaningId}`);
-            // Return with empty occurrences but the semantics we found
-            return {
-                occurrences: [],
-                verb_semantics
-            };
-        }
-
-        // Final fallback - if we have occurrences, return them
-        if (occurrences.length > 0) {
-            return {
-                occurrences,
-                verb_semantics
-            };
-        }
-
-        // No data found at all
-        console.warn(`No data found for meaning: ${meaningId}`);
-        return null;
-
+        // The KCL API returns data in the expected format
+        return responseData;
     } catch (error) {
         console.error(`Error fetching data for meaning ${meaningId}:`, error);
+
+        // Fall back to constructing a meaning from available data
+        try {
+            console.log(`Attempting to find meaning ${meaningId} by searching through preverbs...`);
+
+            // Create a fallback meaning object with minimal data
+            return {
+                verb_semantics: `Meaning ${meaningId}`,
+                occurrences: []
+            };
+        } catch (fallbackError) {
+            console.error('Fallback also failed:', fallbackError);
+        }
         return null;
     }
 };
 
-// Custom hook for fetching preverbs
+// React hook for fetching preverbs
 export const usePreverbs = () => {
-    const [preverbs, setPreverbs] = useState<string[]>([]);
+    const [data, setData] = useState<string[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<Error | null>(null);
 
     useEffect(() => {
-        console.log('Fetching preverbs...');
-        setLoading(true);
-
-        // Run debug on first load
-        debugEndpoints();
-
-        fetchPreverbs()
-            .then(data => {
-                console.log('Preverbs fetched successfully:', data);
-                setPreverbs(data);
-                setLoading(false);
-            })
-            .catch(err => {
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                const result = await fetchPreverbs();
+                setData(result);
+                setError(null);
+            } catch (err) {
                 console.error('Error in usePreverbs hook:', err);
-                setError(err instanceof Error ? err : new Error(String(err)));
+                setError(err instanceof Error ? err : new Error('Unknown error fetching preverbs'));
+            } finally {
                 setLoading(false);
-            });
+            }
+        };
+
+        fetchData();
     }, []);
 
-    return { preverbs, loading, error };
+    return { preverbs: data, loading, error };
 };
 
-// Custom hook for fetching data for a specific preverb
+// React hook for fetching preverb data
 export const usePreverbData = (preverb: string | null) => {
     const [data, setData] = useState<PreverbData | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<Error | null>(null);
 
     useEffect(() => {
-        if (preverb) {
-            setLoading(true);
-            setError(null);
-
-            fetchPreverbData(preverb)
-                .then(data => {
-                    setData(data);
-                    setLoading(false);
-                })
-                .catch(err => {
-                    console.error(`Error in usePreverbData hook for preverb ${preverb}:`, err);
-                    setError(err instanceof Error ? err : new Error(String(err)));
-                    setLoading(false);
-                });
-        } else {
-            // Reset state when no preverb is selected
+        if (!preverb) {
             setData(null);
+            setLoading(false);
             setError(null);
+            return;
         }
+
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                const result = await fetchPreverbData(preverb);
+                setData(result);
+                setError(null);
+            } catch (err) {
+                console.error(`Error in usePreverbData hook for ${preverb}:`, err);
+                setError(err instanceof Error ? err : new Error(`Unknown error fetching data for ${preverb}`));
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
     }, [preverb]);
 
     return { data, loading, error };
 };
 
-// Custom hook for fetching data for a specific meaning
+// React hook for fetching meaning data
 export const useMeaningData = (meaningId: string | null) => {
     const [data, setData] = useState<MeaningData | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<Error | null>(null);
 
     useEffect(() => {
-        if (meaningId) {
-            setLoading(true);
-            setError(null);
-
-            fetchMeaningData(meaningId)
-                .then(data => {
-                    setData(data);
-                    setLoading(false);
-                })
-                .catch(err => {
-                    console.error(`Error in useMeaningData hook for meaning ${meaningId}:`, err);
-                    setError(err instanceof Error ? err : new Error(String(err)));
-                    setLoading(false);
-                });
-        } else {
-            // Reset state when no meaningId is provided
+        if (!meaningId) {
             setData(null);
+            setLoading(false);
             setError(null);
+            return;
         }
+
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                const result = await fetchMeaningData(meaningId);
+                setData(result);
+                setError(null);
+            } catch (err) {
+                console.error(`Error in useMeaningData hook for ${meaningId}:`, err);
+                setError(err instanceof Error ? err : new Error(`Unknown error fetching data for meaning ${meaningId}`));
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
     }, [meaningId]);
 
     return { data, loading, error };
