@@ -8,7 +8,7 @@ type CardProps = {
 export function Card({ className, ...props }: CardProps) {
   return (
     <div
-      className={`rounded-lg border border-border bg-card text-card-foreground shadow-sm ${className}`}
+      className={`rounded-xl border border-border bg-card text-card-foreground shadow-sm hover:shadow-md transition-all duration-200 ${className}`}
       {...props}
     />
   )
@@ -21,7 +21,7 @@ export function CardHeader({ className, ...props }: CardProps) {
 export function CardTitle({ className, ...props }: CardProps) {
   return (
     <h3
-      className={`text-2xl font-semibold leading-none tracking-tight ${className}`}
+      className={`text-2xl font-bold leading-none tracking-tight text-foreground ${className}`}
       {...props}
     />
   )
@@ -35,4 +35,13 @@ export function CardDescription({ className, ...props }: CardProps) {
 
 export function CardContent({ className, ...props }: CardProps) {
   return <div className={`p-6 pt-0 ${className}`} {...props} />
+}
+
+export function CardFooter({ className, ...props }: CardProps) {
+  return (
+    <div
+      className={`flex items-center p-6 pt-0 ${className}`}
+      {...props}
+    />
+  )
 }

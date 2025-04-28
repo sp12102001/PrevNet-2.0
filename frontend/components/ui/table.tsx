@@ -4,7 +4,7 @@ const Table = React.forwardRef<
   HTMLTableElement,
   React.HTMLAttributes<HTMLTableElement>
 >(({ className, ...props }: React.HTMLAttributes<HTMLTableElement>, ref: React.Ref<HTMLTableElement>) => (
-  <div className="relative w-full overflow-auto">
+  <div className="relative w-full overflow-auto rounded-lg border border-border">
     <table
       ref={ref}
       className={`w-full caption-bottom text-sm ${className}`}
@@ -18,7 +18,7 @@ const TableHeader = React.forwardRef<
   HTMLTableSectionElement,
   React.HTMLAttributes<HTMLTableSectionElement>
 >(({ className, ...props }: React.HTMLAttributes<HTMLTableSectionElement>, ref: React.Ref<HTMLTableSectionElement>) => (
-  <thead ref={ref} className={`[&_tr]:border-b ${className || ''}`} {...props} />
+  <thead ref={ref} className={`[&_tr]:border-b bg-muted/50 ${className || ''}`} {...props} />
 ))
 TableHeader.displayName = "TableHeader"
 
@@ -40,7 +40,7 @@ const TableRow = React.forwardRef<
 >(({ className, ...props }: React.HTMLAttributes<HTMLTableRowElement>, ref: React.Ref<HTMLTableRowElement>) => (
   <tr
     ref={ref}
-    className={`border-b transition-colors hover:bg-muted/50 ${className || ''}`}
+    className={`border-b transition-colors hover:bg-blue-50 dark:hover:bg-blue-900/10 ${className || ''}`}
     {...props}
   />
 ))
@@ -52,7 +52,7 @@ const TableHead = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <th
     ref={ref}
-    className={`h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 ${className}`}
+    className={`h-12 px-4 text-left align-middle font-semibold text-foreground [&:has([role=checkbox])]:pr-0 ${className}`}
     {...props}
   />
 ))
@@ -70,6 +70,18 @@ const TableCell = React.forwardRef<
 ))
 TableCell.displayName = "TableCell"
 
+const TableCaption = React.forwardRef<
+  HTMLTableCaptionElement,
+  React.HTMLAttributes<HTMLTableCaptionElement>
+>(({ className, ...props }, ref) => (
+  <caption
+    ref={ref}
+    className={`mt-4 text-sm text-muted-foreground ${className}`}
+    {...props}
+  />
+))
+TableCaption.displayName = "TableCaption"
+
 export {
   Table,
   TableHeader,
@@ -77,4 +89,5 @@ export {
   TableHead,
   TableRow,
   TableCell,
+  TableCaption,
 }
