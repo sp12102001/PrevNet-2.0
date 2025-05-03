@@ -1,7 +1,14 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import PreverbDashboard from '../preverbs';
 import BackButton from '@/components/BackButton';
+import { setCurrentLanguage } from '@/services/localData';
 
 const GreekSearch = () => {
+    // Set language to Greek when this page is loaded
+    useEffect(() => {
+        setCurrentLanguage('greek');
+    }, []);
+
     return (
         <div className="space-y-6">
             <BackButton href="/" label="Back to Home" />
@@ -11,10 +18,7 @@ const GreekSearch = () => {
                 Explore Ancient Greek preverbs and their linguistic properties.
             </p>
 
-            <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
-                <p className="font-bold">Coming Soon</p>
-                <p>The Ancient Greek search functionality is currently in development and will be available in a future update.</p>
-            </div>
+            <PreverbDashboard />
         </div>
     );
 };

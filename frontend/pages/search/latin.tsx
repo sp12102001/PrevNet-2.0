@@ -1,8 +1,14 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import PreverbDashboard from '../preverbs';
 import BackButton from '@/components/BackButton';
+import { setCurrentLanguage } from '@/services/localData';
 
 const LatinSearch = () => {
+    // Set language to Latin when this page is loaded
+    useEffect(() => {
+        setCurrentLanguage('latin');
+    }, []);
+
     return (
         <div className="space-y-6">
             <BackButton href="/" label="Back to Home" />

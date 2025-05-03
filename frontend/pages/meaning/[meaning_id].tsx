@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router';
-import { useMeaningData } from '@/services/api';
+import { useLocalMeaningData } from '@/services/localData';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import Link from 'next/link';
 import ErrorFallback from '@/components/ErrorFallback';
@@ -15,13 +15,13 @@ export default function MeaningPage() {
     if (meaning_id && !hasLogged) {
       console.log('Viewing meaning page for ID:', meaning_id);
       console.log('Query params:', router.query);
-      console.log('Data source: KCL API');
+      console.log('Data source: Local JSON files');
       setHasLogged(true);
     }
   }, [meaning_id, router.query, hasLogged]);
 
-  // Use KCL API
-  const { data, loading, error } = useMeaningData(meaning_id as string);
+  // Use local data instead of KCL API
+  const { data, loading, error } = useLocalMeaningData(meaning_id as string);
 
   // Add debugging for URL encoding issues
   useEffect(() => {
@@ -152,9 +152,9 @@ export default function MeaningPage() {
           resetError={() => router.reload()}
           customMessage={
             <div>
-              <p>Error fetching meaning data for ID: {meaning_id} from KCL API</p>
+              <p>Error fetching meaning data for ID: {meaning_id} from local data files</p>
               <p className="text-sm mt-2">
-                Note: If the meaning ID contains special characters (like #), it may not be supported by the API.
+                This could be due to the meaning ID format not matching any records in the data files.
               </p>
               <div className="mt-4 p-3 bg-muted rounded text-xs font-mono overflow-auto text-muted-foreground">
                 <p>ID: {meaning_id}</p>
@@ -181,8 +181,7 @@ export default function MeaningPage() {
         <div className="bg-card border border-border px-4 py-3 rounded my-4">
           <p className="font-bold text-card-foreground">No data found</p>
           <p className="text-card-foreground">Could not find any data for meaning ID: {meaning_id}</p>
-          <p className="mt-2 text-muted-foreground">Try checking the KCL API endpoint in your browser console.</p>
-          <p className="text-xs mt-1 text-muted-foreground">https://prevnet.sites.er.kcl.ac.uk/api/meanings/{meaning_id}</p>
+          <p className="mt-2 text-muted-foreground">This ID might not match any records in the local data files.</p>
           <button
             onClick={() => {
               console.log('Reloading page for meaning ID:', meaning_id);
@@ -248,42 +247,29 @@ export default function MeaningPage() {
                 <div className="bg-muted p-3 rounded-md">
                   <span className="block text-xs text-muted-foreground mb-1.5 uppercase tracking-wide font-medium">Sentence</span>
                   <div className="text-card-foreground leading-relaxed">
-                    {highlightToken(item.sentence || '', item.token || '')}
+                    {highlightToken(item.sentence, item.token)}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
-                    <span className="block text-xs text-muted-foreground uppercase tracking-wide font-medium">Author</span>
-                    <div className="mt-1 truncate">{item.author || <span className="text-muted-foreground">Unknown</span>}</div>
+                    <span className="block text-xs text-muted-foreground mb-1.5 uppercase tracking-wide font-medium">Author</span>
+                    <span className="text-card-foreground">{item.author || 'Unknown'}</span>
                   </div>
+
                   <div>
-                    <span className="block text-xs text-muted-foreground uppercase tracking-wide font-medium">Work</span>
-                    <div className="mt-1 truncate">{item.title || <span className="text-muted-foreground">Unknown</span>}</div>
+                    <span className="block text-xs text-muted-foreground mb-1.5 uppercase tracking-wide font-medium">Work</span>
+                    <span className="text-card-foreground">{item.title || 'Unknown'}</span>
                   </div>
+
                   <div>
-                    <span className="block text-xs text-muted-foreground uppercase tracking-wide font-medium">Period</span>
-                    <div className="mt-1">{formatCentury(item.century || '') || <span className="text-muted-foreground">Unknown</span>}</div>
+                    <span className="block text-xs text-muted-foreground mb-1.5 uppercase tracking-wide font-medium">Period</span>
+                    <span className="text-card-foreground">{formatCentury(item.century)}</span>
                   </div>
+
                   <div>
-                    {item.location_url && (
-                      <div className="mt-1">
-                        <span className="block text-xs text-muted-foreground uppercase tracking-wide font-medium">Source</span>
-                        <a
-                          href={item.location_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1 text-primary hover:text-primary/80 hover:underline mt-1"
-                        >
-                          View
-                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                            <polyline points="15 3 21 3 21 9"></polyline>
-                            <line x1="10" y1="14" x2="21" y2="3"></line>
-                          </svg>
-                        </a>
-                      </div>
-                    )}
+                    <span className="block text-xs text-muted-foreground mb-1.5 uppercase tracking-wide font-medium">Form</span>
+                    <span className="text-card-foreground">{item.token || 'Unknown'}</span>
                   </div>
                 </div>
               </div>
