@@ -11,6 +11,7 @@ interface LocalDataRecord {
     preverb: string;
     preverb_semantics: string;
     verb_semantics: string;
+    literal_meaning: boolean;
     author: string;
     title: string;
     genre: string;
@@ -246,32 +247,37 @@ export const useLocalPreverbData = (preverb: string | null) => {
                 };
 
                 filteredRecords.forEach(record => {
-                    if (!record.preverb_semantics) return;
-
-                    // Categorize based on preverb semantics
-                    // Spatial/directional/physical meanings are considered "LITERAL"
-                    // Abstract/figurative meanings are considered "NON-LITERAL"
-                    const semantics = record.preverb_semantics.toLowerCase();
-
-                    // Check for common spatial/directional keywords indicating literal use
-                    const literalKeywords = [
-                        'away', 'from', 'towards', 'to', 'into', 'out', 'through',
-                        'across', 'up', 'down', 'on', 'off', 'over', 'under', 'in front',
-                        'behind', 'before', 'after', 'around', 'together', 'apart'
-                    ];
-
-                    let isLiteral = false;
-                    for (const keyword of literalKeywords) {
-                        if (semantics.includes(keyword)) {
-                            isLiteral = true;
-                            break;
+                    if ('literal_meaning' in record && record.literal_meaning !== undefined) {
+                        // Use the literal_meaning boolean field from the dataset
+                        if (record.literal_meaning === true) {
+                            literalMeanings["LITERAL"] += 1;
+                        } else {
+                            literalMeanings["NON-LITERAL"] += 1;
                         }
-                    }
+                    } else if (record.preverb_semantics) {
+                        // Fallback to keyword-based method
+                        const semantics = record.preverb_semantics.toLowerCase();
 
-                    if (isLiteral) {
-                        literalMeanings["LITERAL"] += 1;
-                    } else {
-                        literalMeanings["NON-LITERAL"] += 1;
+                        // Check for common spatial/directional keywords indicating literal use
+                        const literalKeywords = [
+                            'away', 'from', 'towards', 'to', 'into', 'out', 'through',
+                            'across', 'up', 'down', 'on', 'off', 'over', 'under', 'in front',
+                            'behind', 'before', 'after', 'around', 'together', 'apart'
+                        ];
+
+                        let isLiteral = false;
+                        for (const keyword of literalKeywords) {
+                            if (semantics.includes(keyword)) {
+                                isLiteral = true;
+                                break;
+                            }
+                        }
+
+                        if (isLiteral) {
+                            literalMeanings["LITERAL"] += 1;
+                        } else {
+                            literalMeanings["NON-LITERAL"] += 1;
+                        }
                     }
                 });
 
