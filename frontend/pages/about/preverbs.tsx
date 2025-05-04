@@ -30,100 +30,100 @@ const Preverbs = () => {
                         </thead>
                         <tbody>
                             <tr>
-                                <td className="border p-2">ana- 'up, 'back'</td>
-                                <td className="border p-2">anabaínō 'go up'<br />anaphérō 'bring up/back'</td>
-                                <td className="border p-2">ab- 'away', 'from'</td>
-                                <td className="border p-2">abeo 'go away'<br />aufero (&lt; *ab-fero) 'take away'</td>
+                                <td className="border p-2">ana- &apos;up, &apos;back&apos;</td>
+                                <td className="border p-2">anabaínō &apos;go up&apos;<br />anaphérō &apos;bring up/back&apos;</td>
+                                <td className="border p-2">ab- &apos;away&apos;, &apos;from&apos;</td>
+                                <td className="border p-2">abeo &apos;go away&apos;<br />aufero (&lt; *ab-fero) &apos;take away&apos;</td>
                             </tr>
                             <tr>
-                                <td className="border p-2">anti- 'against', 'opposite'</td>
-                                <td className="border p-2">antibaínō 'go against'<br />antibállō 'throw against'</td>
-                                <td className="border p-2">ad- 'to', 'towards'</td>
-                                <td className="border p-2">adeo 'reach'<br />appono (&lt; *ad-pono) 'put at'</td>
+                                <td className="border p-2">anti- &apos;against&apos;, &apos;opposite&apos;</td>
+                                <td className="border p-2">antibaínō &apos;go against&apos;<br />antibállō &apos;throw against&apos;</td>
+                                <td className="border p-2">ad- &apos;to&apos;, &apos;towards&apos;</td>
+                                <td className="border p-2">adeo &apos;reach&apos;<br />appono (&lt; *ad-pono) &apos;put at&apos;</td>
                             </tr>
                             <tr>
-                                <td className="border p-2">apo- 'away', 'from'</td>
-                                <td className="border p-2">apobaínō 'go away'<br />apophérō 'carry away'</td>
-                                <td className="border p-2">ante- 'before'</td>
-                                <td className="border p-2">anteeo 'go before'<br />antepono 'set before'</td>
+                                <td className="border p-2">apo- &apos;away&apos;, &apos;from&apos;</td>
+                                <td className="border p-2">apobaínō &apos;go away&apos;<br />apophérō &apos;carry away&apos;</td>
+                                <td className="border p-2">ante- &apos;before&apos;</td>
+                                <td className="border p-2">anteeo &apos;go before&apos;<br />antepono &apos;set before&apos;</td>
                             </tr>
                             <tr>
-                                <td className="border p-2">dia- 'through', 'across'</td>
-                                <td className="border p-2">diabaínō 'step across'<br />diaphérō 'carry through'</td>
-                                <td className="border p-2">circum- 'around'</td>
-                                <td className="border p-2">circumeo 'go around'<br />circumfero 'carry around'</td>
+                                <td className="border p-2">dia- &apos;through&apos;, &apos;across&apos;</td>
+                                <td className="border p-2">diabaínō &apos;step across&apos;<br />diaphérō &apos;carry through&apos;</td>
+                                <td className="border p-2">circum- &apos;around&apos;</td>
+                                <td className="border p-2">circumeo &apos;go around&apos;<br />circumfero &apos;carry around&apos;</td>
                             </tr>
                             <tr>
-                                <td className="border p-2">eis- 'into'</td>
-                                <td className="border p-2">eisbaínō 'enter, board'<br />eisphérō 'bring in'</td>
-                                <td className="border p-2">con- (&lt; cum-) 'with', 'together'</td>
-                                <td className="border p-2">coeo 'go together'<br />confero 'bring together'</td>
+                                <td className="border p-2">eis- &apos;into&apos;</td>
+                                <td className="border p-2">eisbaínō &apos;enter, board&apos;<br />eisphérō &apos;bring in&apos;</td>
+                                <td className="border p-2">con- (&lt; cum-) &apos;with&apos;, &apos;together&apos;</td>
+                                <td className="border p-2">coeo &apos;go together&apos;<br />confero &apos;bring together&apos;</td>
                             </tr>
                             <tr>
-                                <td className="border p-2">ek- 'out of'</td>
-                                <td className="border p-2">ekbaínō 'exit'<br />ekphérō 'carry out'</td>
-                                <td className="border p-2">de- 'down from', 'away'</td>
-                                <td className="border p-2">defero 'take down'<br />depono 'lay away'</td>
+                                <td className="border p-2">ek- &apos;out of&apos;</td>
+                                <td className="border p-2">ekbaínō &apos;exit&apos;<br />ekphérō &apos;carry out&apos;</td>
+                                <td className="border p-2">de- &apos;down from&apos;, &apos;away&apos;</td>
+                                <td className="border p-2">defero &apos;take down&apos;<br />depono &apos;lay away&apos;</td>
                             </tr>
                             <tr>
-                                <td className="border p-2">en- 'in', 'into'</td>
-                                <td className="border p-2">éneimi 'be in'<br />embaínō 'step in(to), embark'</td>
-                                <td className="border p-2">ex- 'out of'</td>
-                                <td className="border p-2">exeo 'exit'<br />expono 'put out'</td>
+                                <td className="border p-2">en- &apos;in&apos;, &apos;into&apos;</td>
+                                <td className="border p-2">éneimi &apos;be in&apos;<br />embaínō &apos;step in(to), embark&apos;</td>
+                                <td className="border p-2">ex- &apos;out of&apos;</td>
+                                <td className="border p-2">exeo &apos;exit&apos;<br />expono &apos;put out&apos;</td>
                             </tr>
                             <tr>
-                                <td className="border p-2">epi- 'upon', 'on', 'against'</td>
-                                <td className="border p-2">epibaínō 'go upon'<br />epibállō 'throw upon'</td>
-                                <td className="border p-2">in- 'in', 'on', 'into'</td>
-                                <td className="border p-2">ineo 'enter'<br />impono (&lt; *in-pono) 'place upon'</td>
+                                <td className="border p-2">epi- &apos;upon&apos;, &apos;on&apos;, &apos;against&apos;</td>
+                                <td className="border p-2">epibaínō &apos;go upon&apos;<br />epibállō &apos;throw upon&apos;</td>
+                                <td className="border p-2">in- &apos;in&apos;, &apos;on&apos;, &apos;into&apos;</td>
+                                <td className="border p-2">ineo &apos;enter&apos;<br />impono (&lt; *in-pono) &apos;place upon&apos;</td>
                             </tr>
                             <tr>
-                                <td className="border p-2">kata- 'down', 'against'</td>
-                                <td className="border p-2">katabaínō 'go down'<br />kataphérō 'carry down'</td>
-                                <td className="border p-2">inter- 'between', 'among'</td>
-                                <td className="border p-2">intereo 'go among'<br />interpono 'put between'</td>
+                                <td className="border p-2">kata- &apos;down&apos;, &apos;against&apos;</td>
+                                <td className="border p-2">katabaínō &apos;go down&apos;<br />kataphérō &apos;carry down&apos;</td>
+                                <td className="border p-2">inter- &apos;between&apos;, &apos;among&apos;</td>
+                                <td className="border p-2">intereo &apos;go among&apos;<br />interpono &apos;put between&apos;</td>
                             </tr>
                             <tr>
-                                <td className="border p-2">meta- 'among', 'over'</td>
-                                <td className="border p-2">metabaínō 'pass over'<br />metaphérō 'carry over, transfer'</td>
-                                <td className="border p-2">intro- 'within, inside of'</td>
-                                <td className="border p-2">introeo 'go in, enter'<br />intromitto 'send in, let in'</td>
+                                <td className="border p-2">meta- &apos;among&apos;, &apos;over&apos;</td>
+                                <td className="border p-2">metabaínō &apos;pass over&apos;<br />metaphérō &apos;carry over, transfer&apos;</td>
+                                <td className="border p-2">intro- &apos;within, inside of&apos;</td>
+                                <td className="border p-2">introeo &apos;go in, enter&apos;<br />intromitto &apos;send in, let in&apos;</td>
                             </tr>
                             <tr>
-                                <td className="border p-2">para- 'beside'</td>
-                                <td className="border p-2">parabaínō 'pass by'<br />parabállō 'throw beside'</td>
-                                <td className="border p-2">ob- 'towards', 'against'</td>
-                                <td className="border p-2">obeo 'meet'<br />oppono 'set against'</td>
+                                <td className="border p-2">para- &apos;beside&apos;</td>
+                                <td className="border p-2">parabaínō &apos;pass by&apos;<br />parabállō &apos;throw beside&apos;</td>
+                                <td className="border p-2">ob- &apos;towards&apos;, &apos;against&apos;</td>
+                                <td className="border p-2">obeo &apos;meet&apos;<br />oppono &apos;set against&apos;</td>
                             </tr>
                             <tr>
-                                <td className="border p-2">peri- 'around'</td>
-                                <td className="border p-2">peribaínō 'go around'<br />peribállō 'throw around'</td>
-                                <td className="border p-2">per- 'through'</td>
-                                <td className="border p-2">perago 'carry through'<br />perfero 'bear through'</td>
+                                <td className="border p-2">peri- &apos;around&apos;</td>
+                                <td className="border p-2">peribaínō &apos;go around&apos;<br />peribállō &apos;throw around&apos;</td>
+                                <td className="border p-2">per- &apos;through&apos;</td>
+                                <td className="border p-2">perago &apos;carry through&apos;<br />perfero &apos;bear through&apos;</td>
                             </tr>
                             <tr>
-                                <td className="border p-2">pro- 'before', 'forward'</td>
-                                <td className="border p-2">probaínō 'step forward'<br />prophérō 'bring before'</td>
-                                <td className="border p-2">prae- 'before', 'ahead'</td>
-                                <td className="border p-2">praeeo 'go before'<br />praepono 'place in front'</td>
+                                <td className="border p-2">pro- &apos;before&apos;, &apos;forward&apos;</td>
+                                <td className="border p-2">probaínō &apos;step forward&apos;<br />prophérō &apos;bring before&apos;</td>
+                                <td className="border p-2">prae- &apos;before&apos;, &apos;ahead&apos;</td>
+                                <td className="border p-2">praeeo &apos;go before&apos;<br />praepono &apos;place in front&apos;</td>
                             </tr>
                             <tr>
-                                <td className="border p-2">pros- 'towards', 'against'</td>
-                                <td className="border p-2">prosbaínō 'approach'<br />prosbállō 'dash against'</td>
-                                <td className="border p-2">pro- 'for', 'forward'</td>
-                                <td className="border p-2">profero 'bring forward'<br />propono 'put forward'</td>
+                                <td className="border p-2">pros- &apos;towards&apos;, &apos;against&apos;</td>
+                                <td className="border p-2">prosbaínō &apos;approach&apos;<br />prosbállō &apos;dash against&apos;</td>
+                                <td className="border p-2">pro- &apos;for&apos;, &apos;forward&apos;</td>
+                                <td className="border p-2">profero &apos;bring forward&apos;<br />propono &apos;put forward&apos;</td>
                             </tr>
                             <tr>
-                                <td className="border p-2">sun- 'with', 'together'</td>
-                                <td className="border p-2">sumbállō 'throw together'<br />sumphérō 'bring together'</td>
-                                <td className="border p-2">sub- 'under'</td>
-                                <td className="border p-2">suffero 'carry under, bear'<br />suppono 'put below'</td>
+                                <td className="border p-2">sun- &apos;with&apos;, &apos;together&apos;</td>
+                                <td className="border p-2">sumbállō &apos;throw together&apos;<br />sumphérō &apos;bring together&apos;</td>
+                                <td className="border p-2">sub- &apos;under&apos;</td>
+                                <td className="border p-2">suffero &apos;carry under, bear&apos;<br />suppono &apos;put below&apos;</td>
                             </tr>
                             <tr>
-                                <td className="border p-2">hupo- 'under'</td>
-                                <td className="border p-2">hupobaínō 'go/come under'<br />hupobállō 'throw under'</td>
-                                <td className="border p-2">trans- 'across'</td>
-                                <td className="border p-2">transeo 'cross'<br />transpono 'set over, transfer'</td>
+                                <td className="border p-2">hupo- &apos;under&apos;</td>
+                                <td className="border p-2">hupobaínō &apos;go/come under&apos;<br />hupobállō &apos;throw under&apos;</td>
+                                <td className="border p-2">trans- &apos;across&apos;</td>
+                                <td className="border p-2">transeo &apos;cross&apos;<br />transpono &apos;set over, transfer&apos;</td>
                             </tr>
                         </tbody>
                     </table>
@@ -160,7 +160,7 @@ const Preverbs = () => {
 
                 <p>A single preverb may express more than one spatial function depending on verb and context. For example:</p>
                 <ul>
-                    <li>Latin in- = 'in' (location) or 'into' (goal)</li>
+                    <li>Latin in- = &apos;in&apos; (location) or &apos;into&apos; (goal)</li>
                     <li>Greek en- vs eis- = clearly distinguished location vs. goal</li>
                 </ul>
 
@@ -169,8 +169,8 @@ const Preverbs = () => {
 
                 <h4>Greek sun-:</h4>
                 <ul>
-                    <li>Symmetrical – sunérkhomai 'come together'</li>
-                    <li>Asymmetrical – sunapothnḗskō 'die together'</li>
+                    <li>Symmetrical – sunérkhomai &apos;come together&apos;</li>
+                    <li>Asymmetrical – sunapothnḗskō &apos;die together&apos;</li>
                 </ul>
 
                 <h4>Latin cum-/con-:</h4>

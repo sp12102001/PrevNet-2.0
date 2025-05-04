@@ -16,7 +16,7 @@ const Project = () => {
                 <p>PrevNet (Preverbs in Network) is an innovative digital research initiative that explores how preverbs interact with motion verbs in Latin and Ancient Greek. The project serves as both a linguistic investigation and an open-access digital resource, offering systematic documentation and analysis of preverbal constructions.</p>
 
                 <h2>Project Origin</h2>
-                <p>PrevNet is part of the PhD research conducted by Andrea Farina at King's College London (2022–2026), funded by UKRI through the <a href="https://gtr.ukri.org/projects?ref=studentship-2749398" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">London Arts & Humanities Partnership (LAHP)</a>. The project takes a comparative and diachronic approach to analyze how motion and spatial concepts are encoded through preverb-verb combinations in two major Indo-European languages.</p>
+                <p>PrevNet is part of the PhD research conducted by Andrea Farina at King&apos;s College London (2022–2026), funded by UKRI through the <a href="https://gtr.ukri.org/projects?ref=studentship-2749398" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">London Arts &amp; Humanities Partnership (LAHP)</a>. The project takes a comparative and diachronic approach to analyze how motion and spatial concepts are encoded through preverb-verb combinations in two major Indo-European languages.</p>
 
                 <h2>What Are Preverbs?</h2>
                 <p>Preverbs are prepositional or adverbial elements that attach to verbal bases, modifying their meanings to express nuances of motion, location, direction, or aspect. In both Latin and Ancient Greek, preverbs are critical tools for expressing spatial relations, making them ideal candidates for cross-linguistic study.</p>
@@ -29,7 +29,7 @@ const Project = () => {
                 </ul>
 
                 <h2>The Team</h2>
-                <p>The PrevNet project is a collaborative effort, with contributions from a team of experts at King's College London and beyond. The team includes:</p>
+                <p>The PrevNet project is a collaborative effort, with contributions from a team of experts at King&apos;s College London and beyond. The team includes:</p>
 
                 <div className="space-y-4 mt-4">
                     <div>
@@ -59,7 +59,7 @@ const Project = () => {
 
                     <div>
                         <h3 className="font-bold">Sanjana Prabhakar (Research Assistant / Web Developer)</h3>
-                        <p>Developed PrevNet application; manages end-to-end maintenance of infrastructure and user functionality.<a href="https://www.kcl.ac.uk/people/sanjana-prabhakar" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">More about Sanjana</a></p>
+                        <p>Developed PrevNet application; manages end-to-end maintenance of infrastructure and user functionality. <a href="https://www.kcl.ac.uk/people/sanjana-prabhakar" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">More about Sanjana</a></p>
                     </div>
                 </div>
 
