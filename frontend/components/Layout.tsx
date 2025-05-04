@@ -27,9 +27,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                             </p>
                         </div>
                         <div className="flex items-center gap-6">
-                            <a href="#" className="text-sm text-muted-foreground hover:text-blue-500 transition-colors">Privacy</a>
-                            <a href="#" className="text-sm text-muted-foreground hover:text-blue-500 transition-colors">Terms</a>
-                            <a href="#" className="text-sm text-muted-foreground hover:text-blue-500 transition-colors">Contact</a>
+                            <a href="https://www.kcl.ac.uk/terms/privacy" className="text-sm text-muted-foreground hover:text-blue-500 transition-colors" target="_blank" rel="noopener noreferrer">Privacy</a>
+                            <a href="https://www.kcl.ac.uk/terms" className="text-sm text-muted-foreground hover:text-blue-500 transition-colors" target="_blank" rel="noopener noreferrer">Terms</a>
+                            <a href="https://www.kcl.ac.uk/#:~:text=Job%20opportunities-,Contact%20us,-%2B44%20(0)20" className="text-sm text-muted-foreground hover:text-blue-500 transition-colors" target="_blank" rel="noopener noreferrer">Contact</a>
                         </div>
                     </div>
                 </div>
