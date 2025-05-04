@@ -36,6 +36,12 @@ let greekData: LocalDataRecord[] | null = null;
 export type Language = 'latin' | 'greek';
 let currentLanguage: Language = 'latin';
 
+// Define the Greek preverb order
+const greekPreverbOrder = [
+    'ἀνά', 'ἀντί', 'ἀπό', 'διά', 'εἰς', 'ἐκ', 'ἐν', 'ἐπί', 'κατά',
+    'μετά', 'παρά', 'περί', 'πρό', 'πρός', 'σύν', 'ὑπό'
+];
+
 // Set the current language
 export const setCurrentLanguage = (language: Language) => {
     currentLanguage = language;
@@ -106,7 +112,36 @@ export const useLocalPreverbs = () => {
                 // Get unique preverbs
                 const uniquePreverbs = Array.from(
                     new Set(records.map(record => record.preverb))
-                ).filter(Boolean).sort();
+                ).filter(Boolean);
+
+                // Sort the preverbs based on language
+                if (language === 'greek') {
+                    // For Greek, sort according to specified order
+                    uniquePreverbs.sort((a, b) => {
+                        // Get the indices in the Greek preverb order array
+                        // If not found, default to a high index for proper sorting
+                        const indexA = greekPreverbOrder.indexOf(a);
+                        const indexB = greekPreverbOrder.indexOf(b);
+
+                        // If both are found in the order array, sort by their positions
+                        if (indexA !== -1 && indexB !== -1) {
+                            return indexA - indexB;
+                        }
+                        // If only A is found, it comes first
+                        if (indexA !== -1) {
+                            return -1;
+                        }
+                        // If only B is found, it comes first
+                        if (indexB !== -1) {
+                            return 1;
+                        }
+                        // If neither is found, use alphabetical order
+                        return a.localeCompare(b);
+                    });
+                } else {
+                    // For Latin, use standard alphabetical sort
+                    uniquePreverbs.sort();
+                }
 
                 setPreverbs(uniquePreverbs);
                 setLoading(false);
