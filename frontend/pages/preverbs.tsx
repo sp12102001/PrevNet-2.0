@@ -43,9 +43,12 @@ const COLORS = [
 // Custom tooltip formatter for the charts
 const CustomTooltip = ({ active, payload }: { active?: boolean, payload?: Array<Record<string, unknown>> }): React.ReactElement | null => {
     if (active && payload && payload.length) {
+        // Get the name from the payload and ensure it's a string
+        const name = String(payload[0].name || '');
+
         return (
-            <div className="bg-card border border-border shadow-md p-3 rounded-md" role="tooltip">
-                <p className="font-medium text-base">{String(payload[0].name || '')}</p>
+            <div className="bg-card border border-border shadow-md p-3 rounded-md max-w-[300px]" role="tooltip">
+                <p className="font-medium text-base break-words">{name}</p>
                 <p className="text-sm mt-1">
                     <span className="font-semibold">Count:</span> {Number(payload[0].value || 0)}
                 </p>
@@ -154,6 +157,50 @@ const renderCustomYAxisTick = (props: {
     // Clean any remaining v# patterns from the label
     const cleanValue = payload.value.replace(/v#\d+\s*/g, '');
 
+    // Split long text into multiple lines
+    if (cleanValue.length > 24) {
+        const words = cleanValue.split(' ');
+        let lines = [];
+        let currentLine = '';
+
+        // Create lines with reasonable length
+        words.forEach(word => {
+            if ((currentLine + ' ' + word).length <= 24) {
+                currentLine += (currentLine ? ' ' : '') + word;
+            } else {
+                if (currentLine) lines.push(currentLine);
+                currentLine = word;
+            }
+        });
+
+        if (currentLine) lines.push(currentLine);
+
+        // If still too long, truncate the last line
+        if (lines.length > 2) {
+            lines = lines.slice(0, 2);
+            lines[lines.length - 1] += '...';
+        }
+
+        return (
+            <g transform={`translate(${x},${y})`}>
+                {lines.map((line, i) => (
+                    <text
+                        key={i}
+                        x={-5}
+                        y={i * 12 - (lines.length - 1) * 6}
+                        dy={4}
+                        textAnchor="end"
+                        fill="#666"
+                        style={{ fontSize: '12px' }}
+                    >
+                        {line}
+                    </text>
+                ))}
+            </g>
+        );
+    }
+
+    // For short text, display as is
     return (
         <g transform={`translate(${x},${y})`}>
             <text
@@ -164,9 +211,7 @@ const renderCustomYAxisTick = (props: {
                 fill="#666"
                 style={{ fontSize: '14px' }}
             >
-                {cleanValue.length > 22
-                    ? `${cleanValue.substring(0, 19)}...`
-                    : cleanValue}
+                {cleanValue}
             </text>
         </g>
     );
@@ -621,16 +666,19 @@ const PreverbDashboard = () => {
                                                     <BarChart
                                                         data={prepareChartData(preverbData.meanings).slice(0, 7)} // Top 7 for better visibility
                                                         layout="vertical"
-                                                        margin={{ top: 5, right: 60, left: 180, bottom: 30 }}
+                                                        margin={{ top: 5, right: 60, left: 220, bottom: 30 }}
                                                     >
                                                         <XAxis type="number" />
                                                         <YAxis
                                                             type="category"
                                                             dataKey="name"
                                                             tick={renderCustomYAxisTick}
-                                                            width={170}
+                                                            width={210}
                                                         />
-                                                        <Tooltip content={<CustomTooltip />} />
+                                                        <Tooltip
+                                                            content={<CustomTooltip />}
+                                                            wrapperStyle={{ maxWidth: '300px' }}
+                                                        />
                                                         <Legend
                                                             layout="horizontal"
                                                             verticalAlign="bottom"
