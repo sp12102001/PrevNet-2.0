@@ -7,8 +7,6 @@ import {
     Tooltip,
     Legend,
     LabelList,
-    RadialBarChart,
-    RadialBar,
     Sector,
     BarChart,
     Bar,
