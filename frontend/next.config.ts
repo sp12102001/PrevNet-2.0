@@ -3,6 +3,11 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
   reactStrictMode: true,
+  output: 'standalone',
+  // Required for Netlify deployment with Next.js 13+
+  images: {
+    unoptimized: true,
+  },
   async headers() {
     return [
       {

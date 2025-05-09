@@ -119,6 +119,26 @@ const activeShapeWrapper = (props: unknown) => {
     return renderActiveShape(props as ActiveShapeProps);
 };
 
+// Define an interface for the different example types
+interface ExampleBase {
+    lemma: string;
+    verb_semantics: string;
+    meaning_id: string;
+}
+
+interface SummaryExample extends ExampleBase {
+    count: number;
+}
+
+interface DetailedExample extends ExampleBase {
+    sentence: string;
+    author: string;
+    title: string;
+    century: string;
+}
+
+type Example = SummaryExample | DetailedExample;
+
 const PreverbDashboard = () => {
     const [selectedPreverb, setSelectedPreverb] = useState<string | null>(null);
     const { preverbs = [], loading: preverbsLoading, error: preverbsError } = useLocalPreverbs();
@@ -128,6 +148,11 @@ const PreverbDashboard = () => {
     // For active/hover effects on pie charts
     const [activeIndex, setActiveIndex] = useState<number | undefined>(undefined);
     const [activePieIndex, setActivePieIndex] = useState<number>(0); // 0 = lemmas, 1 = preverb meanings, 2 = verb semantics
+
+    // For examples pagination
+    const [currentPage, setCurrentPage] = useState(1);
+    const [examplesPerPage, setExamplesPerPage] = useState(10);
+    const [showAllExamples, setShowAllExamples] = useState(false);
 
     // Handle pie slice hover
     const onPieEnter = (data: unknown, index: number, pieIndex: number) => {
@@ -204,6 +229,33 @@ const PreverbDashboard = () => {
         'literal_meanings' in preverbData &&
         Object.keys(preverbData.literal_meanings || {}).length > 0;
     const hasMeaningsData = preverbData && Object.keys(preverbData.meanings || {}).length > 0;
+
+    // Calculate pagination values for examples
+    const totalExamples = showAllExamples && preverbData?.allExamples
+        ? preverbData.allExamples.length
+        : preverbData?.examples?.length || 0;
+
+    const totalPages = Math.ceil(totalExamples / examplesPerPage);
+
+    const currentExamples = showAllExamples && preverbData?.allExamples
+        ? preverbData.allExamples.slice((currentPage - 1) * examplesPerPage, currentPage * examplesPerPage) as DetailedExample[]
+        : preverbData?.examples?.slice((currentPage - 1) * examplesPerPage, currentPage * examplesPerPage) as SummaryExample[] || [];
+
+    // Type guard function to determine example type
+    const isDetailedExample = (example: Example): example is DetailedExample => {
+        return 'sentence' in example;
+    };
+
+    // Handle page change
+    const goToPage = (page: number) => {
+        setCurrentPage(page);
+    };
+
+    // Handle toggle for showing all examples
+    const toggleShowAllExamples = () => {
+        setShowAllExamples(!showAllExamples);
+        setCurrentPage(1); // Reset to first page when toggling
+    };
 
     // Display error fallback if data is completely unreachable
     if (dataChecked && preverbsError && preverbs.length === 0) {
@@ -579,46 +631,151 @@ const PreverbDashboard = () => {
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent>
-                                    {preverbData.examples && preverbData.examples.length > 0 ? (
-                                        <div className="overflow-auto max-h-[400px] rounded-md border">
-                                            <Table>
-                                                <TableHeader className="sticky top-0 bg-background z-10">
-                                                    <TableRow>
-                                                        <TableHead className="w-[120px]">Verbal Base</TableHead>
-                                                        <TableHead>Meaning</TableHead>
-                                                        <TableHead className="w-[80px] text-right">Count</TableHead>
-                                                    </TableRow>
-                                                </TableHeader>
-                                                <TableBody>
-                                                    {preverbData.examples.map((example, index) => (
-                                                        <TableRow key={index}>
-                                                            <TableCell className="font-medium">{example.lemma || 'Unknown'}</TableCell>
-                                                            <TableCell>
-                                                                {example.meaning_id ? (
-                                                                    <Link
-                                                                        href={`/meaning/${encodeURIComponent(example.meaning_id)}`}
-                                                                        className="text-primary hover:text-primary/80 hover:underline flex items-center gap-1 cursor-pointer relative group"
-                                                                        aria-label={`View details for meaning: ${example.verb_semantics || 'Unknown meaning'}`}
-                                                                    >
-                                                                        <span>{example.verb_semantics || 'Unknown meaning'}</span>
-                                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                                                                            <path d="M15 3h6v6"></path>
-                                                                            <path d="M10 14L21 3"></path>
-                                                                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                                                                        </svg>
-                                                                        <span className="absolute bottom-full left-0 mb-2 hidden group-hover:block bg-card border border-border text-card-foreground text-xs rounded px-2 py-1 whitespace-nowrap shadow-sm z-10">
-                                                                            View meaning ID: {example.meaning_id}
-                                                                        </span>
-                                                                    </Link>
-                                                                ) : (
-                                                                    <span>{example.verb_semantics || 'Unknown meaning'}</span>
-                                                                )}
-                                                            </TableCell>
-                                                            <TableCell className="text-right">{example.count || 0}</TableCell>
+                                    {((preverbData?.examples && preverbData.examples.length > 0) ||
+                                     (preverbData?.allExamples && preverbData.allExamples.length > 0)) ? (
+                                        <div>
+                                            <div className="flex justify-between items-center mb-4">
+                                                <button
+                                                    onClick={toggleShowAllExamples}
+                                                    className="bg-primary/10 hover:bg-primary/20 text-primary px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
+                                                >
+                                                    {showAllExamples ? "Show Summary View" : "View All Examples"}
+                                                </button>
+                                                <div className="text-sm text-muted-foreground">
+                                                    Showing {currentExamples.length} of {totalExamples} entries
+                                                </div>
+                                            </div>
+                                            <div className="overflow-auto max-h-[400px] rounded-md border">
+                                                <Table>
+                                                    <TableHeader className="sticky top-0 bg-background z-10">
+                                                        <TableRow>
+                                                            <TableHead className="w-[120px]">Verbal Base</TableHead>
+                                                            <TableHead>Meaning</TableHead>
+                                                            {showAllExamples ? (
+                                                                <>
+                                                                    <TableHead>Sentence</TableHead>
+                                                                    <TableHead>Author</TableHead>
+                                                                    <TableHead>Title</TableHead>
+                                                                    <TableHead>Century</TableHead>
+                                                                </>
+                                                            ) : (
+                                                                <TableHead className="w-[80px] text-right">Count</TableHead>
+                                                            )}
                                                         </TableRow>
-                                                    ))}
-                                                </TableBody>
-                                            </Table>
+                                                    </TableHeader>
+                                                    <TableBody>
+                                                        {currentExamples.map((example, index) => (
+                                                            <TableRow key={index}>
+                                                                <TableCell className="font-medium">{example.lemma || 'Unknown'}</TableCell>
+                                                                <TableCell>
+                                                                    {example.meaning_id ? (
+                                                                        <Link
+                                                                            href={`/meaning/${encodeURIComponent(example.meaning_id)}`}
+                                                                            className="text-primary hover:text-primary/80 hover:underline flex items-center gap-1 cursor-pointer relative group"
+                                                                            aria-label={`View details for meaning: ${example.verb_semantics || 'Unknown meaning'}`}
+                                                                        >
+                                                                            <span>{example.verb_semantics || 'Unknown meaning'}</span>
+                                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                                                                                <path d="M15 3h6v6"></path>
+                                                                                <path d="M10 14L21 3"></path>
+                                                                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                                                            </svg>
+                                                                            <span className="absolute bottom-full left-0 mb-2 hidden group-hover:block bg-card border border-border text-card-foreground text-xs rounded px-2 py-1 whitespace-nowrap shadow-sm z-10">
+                                                                                View meaning ID: {example.meaning_id}
+                                                                            </span>
+                                                                        </Link>
+                                                                    ) : (
+                                                                        <span>{example.verb_semantics || 'Unknown meaning'}</span>
+                                                                    )}
+                                                                </TableCell>
+                                                                {showAllExamples ? (
+                                                                    <>
+                                                                        <TableCell className="max-w-[200px] truncate">
+                                                                            {isDetailedExample(example) ? example.sentence : 'N/A'}
+                                                                        </TableCell>
+                                                                        <TableCell>
+                                                                            {isDetailedExample(example) ? example.author : 'N/A'}
+                                                                        </TableCell>
+                                                                        <TableCell>
+                                                                            {isDetailedExample(example) ? example.title : 'N/A'}
+                                                                        </TableCell>
+                                                                        <TableCell>
+                                                                            {isDetailedExample(example) ? example.century : 'N/A'}
+                                                                        </TableCell>
+                                                                    </>
+                                                                ) : (
+                                                                    <TableCell className="text-right">
+                                                                        {'count' in example ? example.count : 0}
+                                                                    </TableCell>
+                                                                )}
+                                                            </TableRow>
+                                                        ))}
+                                                    </TableBody>
+                                                </Table>
+                                            </div>
+
+                                            {/* Pagination controls */}
+                                            {totalPages > 1 && (
+                                                <div className="flex justify-between items-center mt-4">
+                                                    <button
+                                                        onClick={() => goToPage(currentPage > 1 ? currentPage - 1 : 1)}
+                                                        disabled={currentPage <= 1}
+                                                        className="px-3 py-1.5 rounded-md text-sm font-medium bg-secondary text-secondary-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    >
+                                                        Previous
+                                                    </button>
+
+                                                    <div className="flex items-center gap-1">
+                                                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                                            // Show pages around current page
+                                                            let pageNum;
+                                                            if (totalPages <= 5) {
+                                                                pageNum = i + 1;
+                                                            } else if (currentPage <= 3) {
+                                                                pageNum = i + 1;
+                                                            } else if (currentPage >= totalPages - 2) {
+                                                                pageNum = totalPages - 4 + i;
+                                                            } else {
+                                                                pageNum = currentPage - 2 + i;
+                                                            }
+
+                                                            return (
+                                                                <button
+                                                                    key={i}
+                                                                    onClick={() => goToPage(pageNum)}
+                                                                    className={`w-8 h-8 flex items-center justify-center rounded-md text-sm font-medium ${
+                                                                        currentPage === pageNum
+                                                                            ? 'bg-primary text-primary-foreground'
+                                                                            : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                                                                    }`}
+                                                                >
+                                                                    {pageNum}
+                                                                </button>
+                                                            );
+                                                        })}
+
+                                                        {totalPages > 5 && currentPage < totalPages - 2 && (
+                                                            <>
+                                                                <span className="px-1">...</span>
+                                                                <button
+                                                                    onClick={() => goToPage(totalPages)}
+                                                                    className="w-8 h-8 flex items-center justify-center rounded-md text-sm font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                                                                >
+                                                                    {totalPages}
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                    </div>
+
+                                                    <button
+                                                        onClick={() => goToPage(currentPage < totalPages ? currentPage + 1 : totalPages)}
+                                                        disabled={currentPage >= totalPages}
+                                                        className="px-3 py-1.5 rounded-md text-sm font-medium bg-secondary text-secondary-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    >
+                                                        Next
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
                                     ) : (
                                         <div className="py-8 text-center text-muted-foreground">

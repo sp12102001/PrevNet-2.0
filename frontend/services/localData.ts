@@ -27,6 +27,16 @@ interface LocalDataRecord {
 interface LocalPreverbData extends PreverbData {
     preverb_meanings: { [key: string]: number };
     literal_meanings: { [key: string]: number };
+    // Add detailed examples with complete metadata
+    allExamples: Array<{
+        lemma: string;
+        verb_semantics: string;
+        meaning_id: string;
+        sentence: string;
+        author: string;
+        title: string;
+        century: string;
+    }>;
 }
 
 // Cache the data once loaded
@@ -313,6 +323,25 @@ export const useLocalPreverbData = (preverb: string | null) => {
                     .sort((a, b) => b.count - a.count)
                     .slice(0, 20); // Limit to top 20 examples
 
+                // Create all examples array with complete metadata
+                const allExamples = filteredRecords.map(record => {
+                    const cleanVerbSemantics = record.verb_semantics
+                        .replace(/^\[|\]$/g, '')
+                        .replace(/'v#\d+\s*/g, '')
+                        .replace(/'/g, '')
+                        .trim();
+
+                    return {
+                        lemma: record.lemma,
+                        verb_semantics: cleanVerbSemantics,
+                        meaning_id: `${preverb}_${record.lemma}_${language}`,
+                        sentence: record.sentence,
+                        author: record.author,
+                        title: record.title,
+                        century: record.century
+                    };
+                });
+
                 // Create the preverb data
                 const preverbData: LocalPreverbData = {
                     verbal_bases: verbalBases,
@@ -320,7 +349,8 @@ export const useLocalPreverbData = (preverb: string | null) => {
                     preverb_meanings: preverbMeanings,
                     literal_meanings: literalMeanings,
                     total_occurrences: filteredRecords.length,
-                    examples
+                    examples,
+                    allExamples
                 };
 
                 setData(preverbData);

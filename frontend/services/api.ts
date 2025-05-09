@@ -9,6 +9,15 @@ export interface PreverbData {
     meanings: { [key: string]: number };
     total_occurrences: number;
     examples: Array<{ count: number; lemma: string; verb_semantics: string; meaning_id: string }>;
+    allExamples?: Array<{
+        lemma: string;
+        verb_semantics: string;
+        meaning_id: string;
+        sentence: string;
+        author: string;
+        title: string;
+        century: string;
+    }>;
 }
 
 export interface Occurrence {
@@ -234,7 +243,8 @@ export const fetchPreverbData = async (preverb: string): Promise<PreverbData | n
             verbal_bases: data.verbal_bases || {},
             meanings: data.meanings || {},
             total_occurrences: data.total_occurrences || 0,
-            examples: Array.isArray(data.examples) ? data.examples : []
+            examples: Array.isArray(data.examples) ? data.examples : [],
+            allExamples: Array.isArray(data.allExamples) ? data.allExamples : undefined
         };
     } catch (error) {
         console.error(`Error fetching data for preverb ${preverb}:`, error);
