@@ -324,7 +324,7 @@ export const useLocalPreverbData = (preverb: string | null) => {
                     .slice(0, 20); // Limit to top 20 examples
 
                 // Create all examples array with complete metadata
-                const allExamples = filteredRecords.map(record => {
+                const allExamples = filteredRecords.map((record, index) => {
                     const cleanVerbSemantics = record.verb_semantics
                         .replace(/^\[|\]$/g, '')
                         .replace(/v#\d+\s*/g, '')
@@ -334,7 +334,7 @@ export const useLocalPreverbData = (preverb: string | null) => {
                     return {
                         lemma: record.lemma,
                         verb_semantics: cleanVerbSemantics,
-                        meaning_id: `${preverb}_${record.lemma}_${language}`,
+                        meaning_id: `${preverb}_${record.lemma}_${cleanVerbSemantics.replace(/\s+/g, '_')}_${language}_${index}`,
                         sentence: record.sentence,
                         author: record.author,
                         title: record.title,
@@ -371,21 +371,35 @@ export const useLocalPreverbData = (preverb: string | null) => {
 /**
  * Parse a meaning ID to extract preverb, lemma, and language
  */
-const parseMeaningId = (meaningId: string): { preverb: string, lemma: string, language: Language } => {
+const parseMeaningId = (meaningId: string): { preverb: string, lemma: string, language: Language, verbSemantics?: string } => {
     const parts = meaningId.split('_');
 
     // Default values
     const result = {
         preverb: '',
         lemma: '',
-        language: 'latin' as Language
+        language: 'latin' as Language,
+        verbSemantics: undefined as string | undefined
     };
 
     if (parts.length >= 2) {
         result.preverb = parts[0];
 
-        // If we have language as the last part
-        if (parts.length >= 3 && (parts[parts.length - 1] === 'latin' || parts[parts.length - 1] === 'greek')) {
+        // Handle the new format with more components
+        if (parts.length >= 5) {
+            result.lemma = parts[1];
+            // The verb semantics could have multiple parts joined by underscores
+            // We assume that the language is either the second-to-last or third-to-last part
+            if (parts[parts.length - 2] === 'latin' || parts[parts.length - 2] === 'greek') {
+                result.language = parts[parts.length - 2] as Language;
+                result.verbSemantics = parts.slice(2, parts.length - 2).join('_');
+            } else if (parts[parts.length - 3] === 'latin' || parts[parts.length - 3] === 'greek') {
+                result.language = parts[parts.length - 3] as Language;
+                result.verbSemantics = parts.slice(2, parts.length - 3).join('_');
+            }
+        }
+        // Handle the old format
+        else if (parts.length >= 3 && (parts[parts.length - 1] === 'latin' || parts[parts.length - 1] === 'greek')) {
             result.language = parts[parts.length - 1] as Language;
             // Join all middle parts as the lemma in case it contains underscores
             result.lemma = parts.slice(1, parts.length - 1).join('_');
@@ -417,7 +431,7 @@ export const useLocalMeaningData = (meaningId: string | null) => {
                 setLoading(true);
 
                 // Parse the meaning ID to get preverb, lemma, and language
-                const { preverb, lemma, language } = parseMeaningId(meaningId);
+                const { preverb, lemma, language, verbSemantics } = parseMeaningId(meaningId);
 
                 if (!preverb || !lemma) {
                     throw new Error(`Invalid meaning ID format: ${meaningId}`);
@@ -427,18 +441,37 @@ export const useLocalMeaningData = (meaningId: string | null) => {
                 const records = await loadData(language);
 
                 // Filter for the specific preverb and lemma
-                const matchingRecords = records.filter(
+                let matchingRecords = records.filter(
                     record =>
                         record.preverb.toLowerCase() === preverb.toLowerCase() &&
                         record.lemma.toLowerCase() === lemma.toLowerCase()
                 );
+
+                // If we have verb semantics information, further filter by that
+                if (verbSemantics) {
+                    const cleanedVerbSemantics = verbSemantics.replace(/_/g, ' ');
+                    const moreSpecificRecords = matchingRecords.filter(record => {
+                        const recordVerbSemantics = record.verb_semantics
+                            .replace(/^\[|\]$/g, '')
+                            .replace(/v#\d+\s*/g, '')
+                            .replace(/'/g, '')
+                            .trim();
+
+                        return recordVerbSemantics.toLowerCase() === cleanedVerbSemantics.toLowerCase();
+                    });
+
+                    // Only use the more specific filter if it returns results
+                    if (moreSpecificRecords.length > 0) {
+                        matchingRecords = moreSpecificRecords;
+                    }
+                }
 
                 if (matchingRecords.length === 0) {
                     throw new Error(`No data found for meaning ID: ${meaningId}`);
                 }
 
                 // Extract a representative verb semantics (using the first one)
-                const verbSemantics = matchingRecords[0].verb_semantics
+                const verbSemanticsDisplay = matchingRecords[0].verb_semantics
                     .replace(/^\[|\]$/g, '')
                     .replace(/v#\d+\s*/g, '')
                     .replace(/'/g, '')
@@ -458,7 +491,7 @@ export const useLocalMeaningData = (meaningId: string | null) => {
 
                 setData({
                     occurrences,
-                    verb_semantics: verbSemantics
+                    verb_semantics: verbSemanticsDisplay
                 });
 
                 setLoading(false);
