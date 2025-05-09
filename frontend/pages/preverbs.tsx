@@ -9,7 +9,11 @@ import {
     LabelList,
     RadialBarChart,
     RadialBar,
-    Sector
+    Sector,
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis
 } from 'recharts';
 import {
     Card,
@@ -198,7 +202,7 @@ const PreverbDashboard = () => {
             .sort((a, b) => b.value - a.value);
     };
 
-    // Prepare data for the radial bar chart (for literal vs. non-literal)
+    // Prepare data for the bar chart (for literal vs. non-literal)
     const prepareLiteralData = (data: { [key: string]: number } = {}) => {
         if (!data || Object.keys(data).length === 0) {
             return [];
@@ -213,7 +217,12 @@ const PreverbDashboard = () => {
                 percentage: value / total,
                 fill: COLORS[index % COLORS.length]
             }))
-            .sort((a, b) => b.value - a.value);
+            .sort((a, b) => {
+                // Ensure LITERAL always comes before NON-LITERAL
+                if (a.name === "LITERAL") return -1;
+                if (b.name === "LITERAL") return 1;
+                return b.value - a.value;
+            });
     };
 
     const retryFetchingData = () => {
@@ -340,7 +349,7 @@ const PreverbDashboard = () => {
                                         {hasVerbalBasesData ? (
                                             <div className="h-[300px]">
                                                 <ResponsiveContainer width="100%" height="100%">
-                                                    <PieChart margin={{ top: 10, right: 30, left: 30, bottom: 10 }}>
+                                                    <PieChart margin={{ top: 20, right: 40, left: 20, bottom: 20 }}>
                                                         <defs>
                                                             {prepareChartData(preverbData.verbal_bases).map((entry, index) => (
                                                                 <radialGradient
@@ -371,16 +380,16 @@ const PreverbDashboard = () => {
                                                             data={prepareChartData(preverbData.verbal_bases)}
                                                             dataKey="value"
                                                             nameKey="name"
-                                                            cx="50%"
+                                                            cx="40%"
                                                             cy="50%"
-                                                            innerRadius={activePieIndex === 0 ? 60 : 0}
-                                                            outerRadius={90}
+                                                            innerRadius={activePieIndex === 0 ? 60 : 40}
+                                                            outerRadius={80}
                                                             paddingAngle={2}
                                                             onMouseEnter={(data, index) => onPieEnter(data, index, 0)}
                                                             onMouseLeave={onPieLeave}
                                                             isAnimationActive={true}
                                                             animationDuration={800}
-                                                            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                                                            label={false}
                                                             labelLine={false}
                                                         >
                                                             {prepareChartData(preverbData.verbal_bases).map((entry, index) => (
@@ -397,7 +406,9 @@ const PreverbDashboard = () => {
                                                             layout="vertical"
                                                             verticalAlign="middle"
                                                             align="right"
-                                                            wrapperStyle={{ fontSize: '12px', paddingLeft: '10px' }}
+                                                            wrapperStyle={{ fontSize: '12px', paddingLeft: '20px' }}
+                                                            iconSize={8}
+                                                            iconType="circle"
                                                         />
                                                     </PieChart>
                                                 </ResponsiveContainer>
@@ -425,7 +436,7 @@ const PreverbDashboard = () => {
                                         {hasPreverbMeaningsData ? (
                                             <div className="h-[300px]">
                                                 <ResponsiveContainer width="100%" height="100%">
-                                                    <PieChart>
+                                                    <PieChart margin={{ top: 20, right: 40, left: 20, bottom: 20 }}>
                                                         <defs>
                                                             {prepareChartData(preverbData.preverb_meanings).map((entry, index) => (
                                                                 <radialGradient
@@ -456,13 +467,15 @@ const PreverbDashboard = () => {
                                                             data={prepareChartData(preverbData.preverb_meanings)}
                                                             dataKey="value"
                                                             nameKey="name"
-                                                            cx="50%"
+                                                            cx="40%"
                                                             cy="50%"
-                                                            innerRadius={activePieIndex === 1 ? 60 : 0}
-                                                            outerRadius={90}
+                                                            innerRadius={activePieIndex === 1 ? 60 : 40}
+                                                            outerRadius={80}
                                                             paddingAngle={2}
                                                             onMouseEnter={(data, index) => onPieEnter(data, index, 1)}
                                                             onMouseLeave={onPieLeave}
+                                                            label={false}
+                                                            labelLine={false}
                                                         >
                                                             {prepareChartData(preverbData.preverb_meanings).map((entry, index) => (
                                                                 <Cell
@@ -474,6 +487,14 @@ const PreverbDashboard = () => {
                                                             ))}
                                                         </Pie>
                                                         <Tooltip content={<CustomTooltip />} />
+                                                        <Legend
+                                                            layout="vertical"
+                                                            verticalAlign="middle"
+                                                            align="right"
+                                                            wrapperStyle={{ fontSize: '12px', paddingLeft: '20px' }}
+                                                            iconSize={8}
+                                                            iconType="circle"
+                                                        />
                                                     </PieChart>
                                                 </ResponsiveContainer>
                                             </div>
@@ -491,42 +512,27 @@ const PreverbDashboard = () => {
                                 {/* 3. Graph of literal meanings */}
                                 <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
                                     <CardHeader className="pb-3">
-                                        <CardTitle>3. Literal vs Non-Literal Usage</CardTitle>
+                                        <CardTitle>3. Literal vs Non-Literal Distribution</CardTitle>
                                         <CardDescription>
-                                            Classification of &quot;{selectedPreverb}&quot; meanings as literal or figurative
+                                            Comparison of literal and figurative usage frequencies
                                         </CardDescription>
                                     </CardHeader>
                                     <CardContent>
                                         {hasLiteralMeaningsData ? (
                                             <div className="h-[300px]">
                                                 <ResponsiveContainer width="100%" height="100%">
-                                                    <RadialBarChart
-                                                        innerRadius="30%"
-                                                        outerRadius="90%"
+                                                    <BarChart
                                                         data={prepareLiteralData(preverbData.literal_meanings)}
-                                                        startAngle={90}
-                                                        endAngle={-270}
-                                                        barSize={20}
+                                                        layout="vertical"
+                                                        margin={{ top: 5, right: 40, left: 100, bottom: 30 }}
                                                     >
-                                                        <RadialBar
-                                                            background
-                                                            dataKey="value"
-                                                            cornerRadius={12}
-                                                            animationDuration={1000}
-                                                            label={{
-                                                                position: 'insideStart',
-                                                                fill: '#fff',
-                                                                fontWeight: 'bold'
-                                                            }}
-                                                        >
-                                                            <LabelList
-                                                                position="outside"
-                                                                offset={15}
-                                                                dataKey="name"
-                                                                fill="#333333"
-                                                                style={{ fontSize: '14px', fontWeight: 500 }}
-                                                            />
-                                                        </RadialBar>
+                                                        <XAxis type="number" />
+                                                        <YAxis
+                                                            type="category"
+                                                            dataKey="name"
+                                                            tick={{ fontSize: 14 }}
+                                                            width={90}
+                                                        />
                                                         <Tooltip content={<CustomTooltip />} />
                                                         <Legend
                                                             layout="horizontal"
@@ -534,12 +540,32 @@ const PreverbDashboard = () => {
                                                             align="center"
                                                             iconSize={10}
                                                             iconType="circle"
-                                                            wrapperStyle={{ paddingTop: '20px' }}
+                                                            wrapperStyle={{ paddingTop: '15px' }}
                                                         />
-                                                    </RadialBarChart>
+                                                        <Bar
+                                                            dataKey="value"
+                                                            fill="#3498db"
+                                                            background={{ fill: "#eee" }}
+                                                            radius={[0, 4, 4, 0]}
+                                                            animationDuration={1000}
+                                                        >
+                                                            {prepareLiteralData(preverbData.literal_meanings).map((entry, index) => (
+                                                                <Cell
+                                                                    key={`cell-${index}`}
+                                                                    fill={COLORS[index % COLORS.length]}
+                                                                />
+                                                            ))}
+                                                            <LabelList
+                                                                dataKey="value"
+                                                                position="right"
+                                                                style={{ fill: "#333", fontSize: 14, fontWeight: 500 }}
+                                                                formatter={(value: number) => value}
+                                                            />
+                                                        </Bar>
+                                                    </BarChart>
                                                 </ResponsiveContainer>
                                                 <div className="text-xs text-center text-muted-foreground mt-2">
-                                                    Compare literal vs. figurative usage frequency
+                                                    Bar heights represent occurrence count in the corpus
                                                 </div>
                                             </div>
                                         ) : (
@@ -553,66 +579,61 @@ const PreverbDashboard = () => {
                                 {/* 4. Graph of verb meanings */}
                                 <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
                                     <CardHeader className="pb-3">
-                                        <CardTitle>4. Verb Semantic Distribution</CardTitle>
+                                        <CardTitle>4. Top Verb Semantic Categories</CardTitle>
                                         <CardDescription>
-                                            Different verb meanings when combined with &quot;{selectedPreverb}&quot;
+                                            Most frequent verb meanings with &quot;{selectedPreverb}&quot;
                                         </CardDescription>
                                     </CardHeader>
                                     <CardContent>
                                         {hasMeaningsData ? (
                                             <div className="h-[300px]">
                                                 <ResponsiveContainer width="100%" height="100%">
-                                                    <PieChart>
-                                                        <defs>
-                                                            {prepareChartData(preverbData.meanings).map((entry, index) => (
-                                                                <radialGradient
-                                                                    key={`gradient-${index}`}
-                                                                    id={`gradient-verb-${index}`}
-                                                                    cx="50%"
-                                                                    cy="50%"
-                                                                    r="50%"
-                                                                    fx="50%"
-                                                                    fy="50%"
-                                                                >
-                                                                    <stop
-                                                                        offset="0%"
-                                                                        stopColor={COLORS[index % COLORS.length]}
-                                                                        stopOpacity={0.8}
-                                                                    />
-                                                                    <stop
-                                                                        offset="100%"
-                                                                        stopColor={COLORS[index % COLORS.length]}
-                                                                        stopOpacity={1}
-                                                                    />
-                                                                </radialGradient>
-                                                            ))}
-                                                        </defs>
-                                                        <Pie
-                                                            activeIndex={activePieIndex === 2 ? activeIndex : undefined}
-                                                            activeShape={activeShapeWrapper}
-                                                            data={prepareChartData(preverbData.meanings)}
+                                                    <BarChart
+                                                        data={prepareChartData(preverbData.meanings).slice(0, 7)} // Top 7 for better visibility
+                                                        layout="vertical"
+                                                        margin={{ top: 5, right: 40, left: 100, bottom: 30 }}
+                                                    >
+                                                        <XAxis type="number" />
+                                                        <YAxis
+                                                            type="category"
+                                                            dataKey="name"
+                                                            tick={{ fontSize: 14 }}
+                                                            width={90}
+                                                        />
+                                                        <Tooltip content={<CustomTooltip />} />
+                                                        <Legend
+                                                            layout="horizontal"
+                                                            verticalAlign="bottom"
+                                                            align="center"
+                                                            iconSize={10}
+                                                            iconType="circle"
+                                                            wrapperStyle={{ paddingTop: '15px' }}
+                                                        />
+                                                        <Bar
                                                             dataKey="value"
-                                                            nameKey="name"
-                                                            cx="50%"
-                                                            cy="50%"
-                                                            innerRadius={activePieIndex === 2 ? 60 : 0}
-                                                            outerRadius={90}
-                                                            paddingAngle={2}
-                                                            onMouseEnter={(data, index) => onPieEnter(data, index, 2)}
-                                                            onMouseLeave={onPieLeave}
+                                                            fill="#3498db"
+                                                            background={{ fill: "#eee" }}
+                                                            radius={[0, 4, 4, 0]}
+                                                            animationDuration={1000}
                                                         >
-                                                            {prepareChartData(preverbData.meanings).map((entry, index) => (
+                                                            {prepareChartData(preverbData.meanings).slice(0, 7).map((entry, index) => (
                                                                 <Cell
                                                                     key={`cell-${index}`}
-                                                                    fill={`url(#gradient-verb-${index})`}
-                                                                    stroke={COLORS[index % COLORS.length]}
-                                                                    strokeWidth={1}
+                                                                    fill={COLORS[index % COLORS.length]}
                                                                 />
                                                             ))}
-                                                        </Pie>
-                                                        <Tooltip content={<CustomTooltip />} />
-                                                    </PieChart>
+                                                            <LabelList
+                                                                dataKey="value"
+                                                                position="right"
+                                                                style={{ fill: "#333", fontSize: 14, fontWeight: 500 }}
+                                                                formatter={(value: number) => value}
+                                                            />
+                                                        </Bar>
+                                                    </BarChart>
                                                 </ResponsiveContainer>
+                                                <div className="text-xs text-center text-muted-foreground mt-2">
+                                                    Showing top 7 most frequent semantic categories
+                                                </div>
                                             </div>
                                         ) : (
                                             <div className="flex justify-center items-center h-[300px] text-muted-foreground">
