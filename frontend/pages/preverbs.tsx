@@ -151,7 +151,7 @@ const PreverbDashboard = () => {
 
     // For examples pagination
     const [currentPage, setCurrentPage] = useState(1);
-    const [examplesPerPage, setExamplesPerPage] = useState(10);
+    const [examplesPerPage] = useState(10);
     const [showAllExamples, setShowAllExamples] = useState(false);
 
     // Handle pie slice hover
