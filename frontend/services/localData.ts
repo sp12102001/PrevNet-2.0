@@ -233,7 +233,8 @@ export const useLocalPreverbData = (preverb: string | null) => {
                     const semantics = record.preverb_semantics.split(/,\s*/);
 
                     semantics.forEach(meaning => {
-                        const cleanMeaning = meaning.trim();
+                        // Remove "(malefactive)" when it appears with other text
+                        const cleanMeaning = meaning.trim().replace(/ ?\(malefactive\)/g, '').trim();
                         if (cleanMeaning) {
                             preverbMeanings[cleanMeaning] = (preverbMeanings[cleanMeaning] || 0) + 1;
                         }
