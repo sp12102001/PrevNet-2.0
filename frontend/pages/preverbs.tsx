@@ -151,6 +151,9 @@ const renderCustomYAxisTick = (props: {
 }) => {
     const { x, y, payload } = props;
 
+    // Clean any remaining v# patterns from the label
+    const cleanValue = payload.value.replace(/v#\d+\s*/g, '');
+
     return (
         <g transform={`translate(${x},${y})`}>
             <text
@@ -161,9 +164,9 @@ const renderCustomYAxisTick = (props: {
                 fill="#666"
                 style={{ fontSize: '14px' }}
             >
-                {payload.value.length > 22
-                    ? `${payload.value.substring(0, 19)}...`
-                    : payload.value}
+                {cleanValue.length > 22
+                    ? `${cleanValue.substring(0, 19)}...`
+                    : cleanValue}
             </text>
         </g>
     );

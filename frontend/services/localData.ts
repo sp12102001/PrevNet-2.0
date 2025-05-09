@@ -228,7 +228,7 @@ export const useLocalPreverbData = (preverb: string | null) => {
                 filteredRecords.forEach(record => {
                     const meaning = record.verb_semantics
                         .replace(/^\[|\]$/g, '')
-                        .replace(/'v#\d+\s*/g, '')
+                        .replace(/v#\d+\s*/g, '')
                         .replace(/'/g, '')
                         .trim();
                     meanings[meaning] = (meanings[meaning] || 0) + 1;
@@ -302,7 +302,7 @@ export const useLocalPreverbData = (preverb: string | null) => {
                             count: 1,
                             verb_semantics: record.verb_semantics
                                 .replace(/^\[|\]$/g, '')
-                                .replace(/'v#\d+\s*/g, '')
+                                .replace(/v#\d+\s*/g, '')
                                 .replace(/'/g, '')
                                 .trim()
                         });
@@ -327,7 +327,7 @@ export const useLocalPreverbData = (preverb: string | null) => {
                 const allExamples = filteredRecords.map(record => {
                     const cleanVerbSemantics = record.verb_semantics
                         .replace(/^\[|\]$/g, '')
-                        .replace(/'v#\d+\s*/g, '')
+                        .replace(/v#\d+\s*/g, '')
                         .replace(/'/g, '')
                         .trim();
 
@@ -440,7 +440,7 @@ export const useLocalMeaningData = (meaningId: string | null) => {
                 // Extract a representative verb semantics (using the first one)
                 const verbSemantics = matchingRecords[0].verb_semantics
                     .replace(/^\[|\]$/g, '')
-                    .replace(/'v#\d+\s*/g, '')
+                    .replace(/v#\d+\s*/g, '')
                     .replace(/'/g, '')
                     .trim();
 
