@@ -666,14 +666,14 @@ const PreverbDashboard = () => {
                                                     <BarChart
                                                         data={prepareChartData(preverbData.meanings).slice(0, 7)} // Top 7 for better visibility
                                                         layout="vertical"
-                                                        margin={{ top: 5, right: 60, left: 220, bottom: 30 }}
+                                                        margin={{ top: 5, right: 50, left: 190, bottom: 30 }}
                                                     >
                                                         <XAxis type="number" />
                                                         <YAxis
                                                             type="category"
                                                             dataKey="name"
                                                             tick={renderCustomYAxisTick}
-                                                            width={210}
+                                                            width={180}
                                                         />
                                                         <Tooltip
                                                             content={<CustomTooltip />}
@@ -693,6 +693,7 @@ const PreverbDashboard = () => {
                                                             background={{ fill: "#eee" }}
                                                             radius={[0, 4, 4, 0]}
                                                             animationDuration={1000}
+                                                            barSize={18}
                                                         >
                                                             {prepareChartData(preverbData.meanings).slice(0, 7).map((entry, index) => (
                                                                 <Cell
@@ -705,7 +706,7 @@ const PreverbDashboard = () => {
                                                                 position="right"
                                                                 style={{ fill: "#333", fontSize: 14, fontWeight: 500 }}
                                                                 formatter={(value: number) => value}
-                                                                offset={15}
+                                                                offset={10}
                                                             />
                                                         </Bar>
                                                     </BarChart>
