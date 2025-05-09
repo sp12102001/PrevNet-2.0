@@ -141,6 +141,34 @@ interface DetailedExample extends ExampleBase {
 
 type Example = SummaryExample | DetailedExample;
 
+// Custom tick rendering for Y axis
+const renderCustomYAxisTick = (props: {
+    x: number;
+    y: number;
+    payload: {
+        value: string;
+    };
+}) => {
+    const { x, y, payload } = props;
+
+    return (
+        <g transform={`translate(${x},${y})`}>
+            <text
+                x={-5}
+                y={0}
+                dy={4}
+                textAnchor="end"
+                fill="#666"
+                style={{ fontSize: '14px' }}
+            >
+                {payload.value.length > 22
+                    ? `${payload.value.substring(0, 19)}...`
+                    : payload.value}
+            </text>
+        </g>
+    );
+};
+
 const PreverbDashboard = () => {
     const [selectedPreverb, setSelectedPreverb] = useState<string | null>(null);
     const { preverbs = [], loading: preverbsLoading, error: preverbsError } = useLocalPreverbs();
@@ -522,14 +550,14 @@ const PreverbDashboard = () => {
                                                     <BarChart
                                                         data={prepareLiteralData(preverbData.literal_meanings)}
                                                         layout="vertical"
-                                                        margin={{ top: 5, right: 55, left: 120, bottom: 30 }}
+                                                        margin={{ top: 5, right: 60, left: 180, bottom: 30 }}
                                                     >
                                                         <XAxis type="number" />
                                                         <YAxis
                                                             type="category"
                                                             dataKey="name"
-                                                            tick={{ fontSize: 14 }}
-                                                            width={110}
+                                                            tick={renderCustomYAxisTick}
+                                                            width={170}
                                                         />
                                                         <Tooltip content={<CustomTooltip />} />
                                                         <Legend
@@ -558,7 +586,7 @@ const PreverbDashboard = () => {
                                                                 position="right"
                                                                 style={{ fill: "#333", fontSize: 14, fontWeight: 500 }}
                                                                 formatter={(value: number) => value}
-                                                                offset={10}
+                                                                offset={15}
                                                             />
                                                         </Bar>
                                                     </BarChart>
@@ -590,14 +618,14 @@ const PreverbDashboard = () => {
                                                     <BarChart
                                                         data={prepareChartData(preverbData.meanings).slice(0, 7)} // Top 7 for better visibility
                                                         layout="vertical"
-                                                        margin={{ top: 5, right: 55, left: 120, bottom: 30 }}
+                                                        margin={{ top: 5, right: 60, left: 180, bottom: 30 }}
                                                     >
                                                         <XAxis type="number" />
                                                         <YAxis
                                                             type="category"
                                                             dataKey="name"
-                                                            tick={{ fontSize: 14 }}
-                                                            width={110}
+                                                            tick={renderCustomYAxisTick}
+                                                            width={170}
                                                         />
                                                         <Tooltip content={<CustomTooltip />} />
                                                         <Legend
@@ -626,7 +654,7 @@ const PreverbDashboard = () => {
                                                                 position="right"
                                                                 style={{ fill: "#333", fontSize: 14, fontWeight: 500 }}
                                                                 formatter={(value: number) => value}
-                                                                offset={10}
+                                                                offset={15}
                                                             />
                                                         </Bar>
                                                     </BarChart>
