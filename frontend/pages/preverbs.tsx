@@ -305,7 +305,7 @@ const PreverbDashboard = () => {
                                 <button
                                     key={preverb}
                                     onClick={() => setSelectedPreverb(preverb)}
-                                    className={`p-2 rounded-md transition-colors ${selectedPreverb === preverb
+                                    className={`p-2.5 rounded-md transition-colors ${selectedPreverb === preverb
                                         ? 'bg-primary text-primary-foreground font-medium'
                                         : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
                                         }`}
@@ -334,18 +334,18 @@ const PreverbDashboard = () => {
                     {selectedPreverb && preverbData && (
                         <div className="space-y-8">
                             {/* First row of graphs - 2 charts */}
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                                 {/* 1. Graph of the lemmas */}
                                 <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
-                                    <CardHeader className="pb-3">
+                                    <CardHeader className="pb-2">
                                         <CardTitle>1. Lemma Distribution</CardTitle>
                                         <CardDescription>
                                             Most common verbal bases used with &quot;{selectedPreverb}&quot;
                                         </CardDescription>
                                     </CardHeader>
-                                    <CardContent>
+                                    <CardContent className="pt-2">
                                         {hasVerbalBasesData ? (
-                                            <div className="h-[300px]">
+                                            <div className="h-[320px]">
                                                 <ResponsiveContainer width="100%" height="100%">
                                                     <PieChart margin={{ top: 20, right: 40, left: 20, bottom: 20 }}>
                                                         <defs>
@@ -378,7 +378,7 @@ const PreverbDashboard = () => {
                                                             data={prepareChartData(preverbData.verbal_bases)}
                                                             dataKey="value"
                                                             nameKey="name"
-                                                            cx="40%"
+                                                            cx="50%"
                                                             cy="50%"
                                                             innerRadius={activePieIndex === 0 ? 60 : 40}
                                                             outerRadius={80}
@@ -404,7 +404,7 @@ const PreverbDashboard = () => {
                                                             layout="vertical"
                                                             verticalAlign="middle"
                                                             align="right"
-                                                            wrapperStyle={{ fontSize: '12px', paddingLeft: '20px' }}
+                                                            wrapperStyle={{ fontSize: '12px', paddingLeft: '20px', marginRight: '10px' }}
                                                             iconSize={8}
                                                             iconType="circle"
                                                         />
@@ -424,15 +424,15 @@ const PreverbDashboard = () => {
 
                                 {/* 2. Graph of preverb meaning */}
                                 <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
-                                    <CardHeader className="pb-3">
+                                    <CardHeader className="pb-2">
                                         <CardTitle>2. Preverb Meaning Distribution</CardTitle>
                                         <CardDescription>
                                             Most common meanings associated with &quot;{selectedPreverb}&quot;
                                         </CardDescription>
                                     </CardHeader>
-                                    <CardContent>
+                                    <CardContent className="pt-2">
                                         {hasPreverbMeaningsData ? (
-                                            <div className="h-[300px]">
+                                            <div className="h-[320px]">
                                                 <ResponsiveContainer width="100%" height="100%">
                                                     <PieChart margin={{ top: 20, right: 40, left: 20, bottom: 20 }}>
                                                         <defs>
@@ -465,7 +465,7 @@ const PreverbDashboard = () => {
                                                             data={prepareChartData(preverbData.preverb_meanings)}
                                                             dataKey="value"
                                                             nameKey="name"
-                                                            cx="40%"
+                                                            cx="50%"
                                                             cy="50%"
                                                             innerRadius={activePieIndex === 1 ? 60 : 40}
                                                             outerRadius={80}
@@ -489,7 +489,7 @@ const PreverbDashboard = () => {
                                                             layout="vertical"
                                                             verticalAlign="middle"
                                                             align="right"
-                                                            wrapperStyle={{ fontSize: '12px', paddingLeft: '20px' }}
+                                                            wrapperStyle={{ fontSize: '12px', paddingLeft: '20px', marginRight: '10px' }}
                                                             iconSize={8}
                                                             iconType="circle"
                                                         />
@@ -506,30 +506,30 @@ const PreverbDashboard = () => {
                             </div>
 
                             {/* Second row of graphs - 2 charts */}
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                                 {/* 3. Graph of literal meanings */}
                                 <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
-                                    <CardHeader className="pb-3">
+                                    <CardHeader className="pb-2">
                                         <CardTitle>3. Literal vs Non-Literal Distribution</CardTitle>
                                         <CardDescription>
                                             Comparison of literal and figurative usage frequencies
                                         </CardDescription>
                                     </CardHeader>
-                                    <CardContent>
+                                    <CardContent className="pt-2">
                                         {hasLiteralMeaningsData ? (
-                                            <div className="h-[300px]">
+                                            <div className="h-[320px]">
                                                 <ResponsiveContainer width="100%" height="100%">
                                                     <BarChart
                                                         data={prepareLiteralData(preverbData.literal_meanings)}
                                                         layout="vertical"
-                                                        margin={{ top: 5, right: 40, left: 100, bottom: 30 }}
+                                                        margin={{ top: 5, right: 55, left: 120, bottom: 30 }}
                                                     >
                                                         <XAxis type="number" />
                                                         <YAxis
                                                             type="category"
                                                             dataKey="name"
                                                             tick={{ fontSize: 14 }}
-                                                            width={90}
+                                                            width={110}
                                                         />
                                                         <Tooltip content={<CustomTooltip />} />
                                                         <Legend
@@ -558,6 +558,7 @@ const PreverbDashboard = () => {
                                                                 position="right"
                                                                 style={{ fill: "#333", fontSize: 14, fontWeight: 500 }}
                                                                 formatter={(value: number) => value}
+                                                                offset={10}
                                                             />
                                                         </Bar>
                                                     </BarChart>
@@ -576,27 +577,27 @@ const PreverbDashboard = () => {
 
                                 {/* 4. Graph of verb meanings */}
                                 <Card className="shadow-sm hover:shadow-md transition-shadow duration-200">
-                                    <CardHeader className="pb-3">
+                                    <CardHeader className="pb-2">
                                         <CardTitle>4. Top Verb Semantic Categories</CardTitle>
                                         <CardDescription>
                                             Most frequent verb meanings with &quot;{selectedPreverb}&quot;
                                         </CardDescription>
                                     </CardHeader>
-                                    <CardContent>
+                                    <CardContent className="pt-2">
                                         {hasMeaningsData ? (
-                                            <div className="h-[300px]">
+                                            <div className="h-[320px]">
                                                 <ResponsiveContainer width="100%" height="100%">
                                                     <BarChart
                                                         data={prepareChartData(preverbData.meanings).slice(0, 7)} // Top 7 for better visibility
                                                         layout="vertical"
-                                                        margin={{ top: 5, right: 40, left: 100, bottom: 30 }}
+                                                        margin={{ top: 5, right: 55, left: 120, bottom: 30 }}
                                                     >
                                                         <XAxis type="number" />
                                                         <YAxis
                                                             type="category"
                                                             dataKey="name"
                                                             tick={{ fontSize: 14 }}
-                                                            width={90}
+                                                            width={110}
                                                         />
                                                         <Tooltip content={<CustomTooltip />} />
                                                         <Legend
@@ -625,6 +626,7 @@ const PreverbDashboard = () => {
                                                                 position="right"
                                                                 style={{ fill: "#333", fontSize: 14, fontWeight: 500 }}
                                                                 formatter={(value: number) => value}
+                                                                offset={10}
                                                             />
                                                         </Bar>
                                                     </BarChart>
