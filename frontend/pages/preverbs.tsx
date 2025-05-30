@@ -29,7 +29,7 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import Link from "next/link";
-import { useLocalPreverbs, useLocalPreverbData } from '@/services/localData';
+import { useLocalPreverbs, useLocalPreverbData, useLocalLemmaSearch, useLocalPreverbMeaningSearch, useLocalVerbClassSearch } from '@/services/localData';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorFallback from '@/components/ErrorFallback';
 
@@ -232,6 +232,22 @@ const PreverbDashboard = () => {
     const [examplesPerPage] = useState(10);
     const [showAllExamples, setShowAllExamples] = useState(false);
 
+    // For search modals
+    const [showLemmaSearch, setShowLemmaSearch] = useState(false);
+    const [showPreverbMeaningSearch, setShowPreverbMeaningSearch] = useState(false);
+    const [showVerbClassSearch, setShowVerbClassSearch] = useState(false);
+    const [selectedLemma, setSelectedLemma] = useState<string | null>(null);
+    const [selectedPreverbMeaning, setSelectedPreverbMeaning] = useState<string | null>(null);
+    const [selectedVerbClass, setSelectedVerbClass] = useState<string | null>(null);
+
+    // For verb classes toggle
+    const [showVerbClasses, setShowVerbClasses] = useState(false);
+
+    // Search hooks
+    const { data: lemmaSearchData, loading: lemmaSearchLoading, error: lemmaSearchError } = useLocalLemmaSearch(selectedPreverb, selectedLemma);
+    const { data: preverbMeaningSearchData, loading: preverbMeaningSearchLoading, error: preverbMeaningSearchError } = useLocalPreverbMeaningSearch(selectedPreverb, selectedPreverbMeaning);
+    const { data: verbClassSearchData, loading: verbClassSearchLoading, error: verbClassSearchError } = useLocalVerbClassSearch(selectedPreverb, selectedVerbClass);
+
     // Handle pie slice hover
     const onPieEnter = (data: unknown, index: number, pieIndex: number) => {
         setActiveIndex(index);
@@ -240,6 +256,32 @@ const PreverbDashboard = () => {
 
     const onPieLeave = () => {
         setActiveIndex(undefined);
+    };
+
+    // Handle pie slice clicks for search
+    const handleLemmaClick = (lemma: string) => {
+        setSelectedLemma(lemma);
+        setShowLemmaSearch(true);
+    };
+
+    const handlePreverbMeaningClick = (meaning: string) => {
+        setSelectedPreverbMeaning(meaning);
+        setShowPreverbMeaningSearch(true);
+    };
+
+    const handleVerbClassClick = (verbClass: string) => {
+        setSelectedVerbClass(verbClass);
+        setShowVerbClassSearch(true);
+    };
+
+    // Close search modals
+    const closeSearchModals = () => {
+        setShowLemmaSearch(false);
+        setShowPreverbMeaningSearch(false);
+        setShowVerbClassSearch(false);
+        setSelectedLemma(null);
+        setSelectedPreverbMeaning(null);
+        setSelectedVerbClass(null);
     };
 
     // Debug logging
@@ -461,10 +503,12 @@ const PreverbDashboard = () => {
                                                             paddingAngle={2}
                                                             onMouseEnter={(data, index) => onPieEnter(data, index, 0)}
                                                             onMouseLeave={onPieLeave}
+                                                            onClick={(data) => handleLemmaClick(data.name)}
                                                             isAnimationActive={true}
                                                             animationDuration={800}
                                                             label={false}
                                                             labelLine={false}
+                                                            style={{ cursor: 'pointer' }}
                                                         >
                                                             {prepareChartData(preverbData.verbal_bases).map((entry, index) => (
                                                                 <Cell
@@ -548,8 +592,10 @@ const PreverbDashboard = () => {
                                                             paddingAngle={2}
                                                             onMouseEnter={(data, index) => onPieEnter(data, index, 1)}
                                                             onMouseLeave={onPieLeave}
+                                                            onClick={(data) => handlePreverbMeaningClick(data.name)}
                                                             label={false}
                                                             labelLine={false}
+                                                            style={{ cursor: 'pointer' }}
                                                         >
                                                             {prepareChartData(preverbData.preverb_meanings).map((entry, index) => (
                                                                 <Cell
@@ -658,22 +704,79 @@ const PreverbDashboard = () => {
                                         <CardDescription>
                                             Most frequent verb meanings with &quot;{selectedPreverb}&quot;
                                         </CardDescription>
+                                        <div className="mt-2">
+                                            <button
+                                                onClick={() => setShowVerbClasses(!showVerbClasses)}
+                                                className="text-sm text-primary hover:text-primary/80 underline"
+                                            >
+                                                {showVerbClasses ? "Show verb meanings" : "Click here for a broader verb categorization"}
+                                            </button>
+                                        </div>
                                     </CardHeader>
                                     <CardContent className="pt-2">
-                                        {hasMeaningsData ? (
+                                        {/* Verb Classes View */}
+                                        {showVerbClasses && preverbData?.verb_classes ? (
                                             <div className="h-[320px]">
                                                 <ResponsiveContainer width="100%" height="100%">
                                                     <BarChart
-                                                        data={prepareChartData(preverbData.meanings).slice(0, 7)} // Top 7 for better visibility
+                                                        data={prepareChartData(preverbData.verb_classes).slice(0, 7)}
                                                         layout="vertical"
-                                                        margin={{ top: 5, right: 50, left: 190, bottom: 30 }}
+                                                        margin={{ top: 5, right: 60, left: 200, bottom: 30 }}
                                                     >
                                                         <XAxis type="number" />
                                                         <YAxis
                                                             type="category"
                                                             dataKey="name"
                                                             tick={renderCustomYAxisTick}
-                                                            width={180}
+                                                            width={190}
+                                                        />
+                                                        <Tooltip content={<CustomTooltip />} />
+                                                        <Bar
+                                                            dataKey="value"
+                                                            fill="#3498db"
+                                                            background={{ fill: "#eee" }}
+                                                            radius={[0, 4, 4, 0]}
+                                                            animationDuration={1000}
+                                                            barSize={18}
+                                                            onClick={(data) => handleVerbClassClick(data.name)}
+                                                            style={{ cursor: 'pointer' }}
+                                                        >
+                                                            {prepareChartData(preverbData.verb_classes).slice(0, 7).map((entry, index) => (
+                                                                <Cell
+                                                                    key={`cell-${index}`}
+                                                                    fill={COLORS[index % COLORS.length]}
+                                                                />
+                                                            ))}
+                                                            <LabelList
+                                                                dataKey="value"
+                                                                position="right"
+                                                                style={{ fill: "#333", fontSize: 14, fontWeight: 500 }}
+                                                                formatter={(value: number) => value}
+                                                                offset={10}
+                                                            />
+                                                        </Bar>
+                                                    </BarChart>
+                                                </ResponsiveContainer>
+                                                <div className="text-xs text-center text-muted-foreground mt-2">
+                                                    Showing top 7 most frequent verb classes - click to view examples
+                                                </div>
+                                            </div>
+                                        ) :
+                                        /* Verb Meanings View */
+                                        hasMeaningsData ? (
+                                            <div className="h-[320px]">
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <BarChart
+                                                        data={prepareChartData(preverbData.meanings).slice(0, 7)} // Top 7 for better visibility
+                                                        layout="vertical"
+                                                        margin={{ top: 5, right: 60, left: 200, bottom: 30 }}
+                                                    >
+                                                        <XAxis type="number" />
+                                                        <YAxis
+                                                            type="category"
+                                                            dataKey="name"
+                                                            tick={renderCustomYAxisTick}
+                                                            width={190}
                                                         />
                                                         <Tooltip
                                                             content={<CustomTooltip />}
@@ -736,12 +839,20 @@ const PreverbDashboard = () => {
                                      (preverbData?.allExamples && preverbData.allExamples.length > 0)) ? (
                                         <div>
                                             <div className="flex justify-between items-center mb-4">
-                                                <button
-                                                    onClick={toggleShowAllExamples}
-                                                    className="bg-primary/10 hover:bg-primary/20 text-primary px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
-                                                >
-                                                    {showAllExamples ? "Show Summary View" : "View All Examples"}
-                                                </button>
+                                                <div className="flex gap-3">
+                                                    <button
+                                                        onClick={toggleShowAllExamples}
+                                                        className="bg-primary/10 hover:bg-primary/20 text-primary px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
+                                                    >
+                                                        {showAllExamples ? "Show Summary View" : "View All Examples"}
+                                                    </button>
+                                                    <Link
+                                                        href={`/spatial-relations/${encodeURIComponent(selectedPreverb || '')}`}
+                                                        className="bg-secondary hover:bg-secondary/80 text-secondary-foreground px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
+                                                    >
+                                                        Spatial Relations
+                                                    </Link>
+                                                </div>
                                                 <div className="text-sm text-muted-foreground">
                                                     Showing {currentExamples.length} of {totalExamples} entries
                                                 </div>
@@ -758,6 +869,8 @@ const PreverbDashboard = () => {
                                                                     <TableHead>Author</TableHead>
                                                                     <TableHead>Title</TableHead>
                                                                     <TableHead>Century</TableHead>
+                                                                    <TableHead>Period</TableHead>
+                                                                    <TableHead>Form</TableHead>
                                                                 </>
                                                             ) : (
                                                                 <TableHead className="w-[80px] text-right">Count</TableHead>
@@ -802,6 +915,12 @@ const PreverbDashboard = () => {
                                                                         </TableCell>
                                                                         <TableCell>
                                                                             {isDetailedExample(example) ? example.century : 'N/A'}
+                                                                        </TableCell>
+                                                                        <TableCell>
+                                                                            {isDetailedExample(example) && 'language_period' in example ? String(example.language_period) : 'N/A'}
+                                                                        </TableCell>
+                                                                        <TableCell>
+                                                                            {isDetailedExample(example) && 'morphology' in example ? String(example.morphology) : 'N/A'}
                                                                         </TableCell>
                                                                     </>
                                                                 ) : (
@@ -887,6 +1006,179 @@ const PreverbDashboard = () => {
                             </Card>
                         </div>
                     )}
+                </div>
+            )}
+
+            {/* Search Modals */}
+            {showLemmaSearch && selectedLemma && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-background border border-border rounded-lg shadow-lg max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+                        <div className="p-6">
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-xl font-bold">
+                                    Lemma: {selectedLemma} with {selectedPreverb}
+                                </h2>
+                                <button
+                                    onClick={closeSearchModals}
+                                    className="text-muted-foreground hover:text-foreground"
+                                >
+                                    ✕ Close
+                                </button>
+                            </div>
+                            {lemmaSearchLoading ? (
+                                <LoadingSpinner />
+                            ) : lemmaSearchError ? (
+                                <div className="text-red-500">{lemmaSearchError.message}</div>
+                            ) : lemmaSearchData && lemmaSearchData.length > 0 ? (
+                                <div className="overflow-auto max-h-[60vh]">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Sentence</TableHead>
+                                                <TableHead>Author</TableHead>
+                                                <TableHead>Title</TableHead>
+                                                <TableHead>Century</TableHead>
+                                                <TableHead>Period</TableHead>
+                                                <TableHead>Form</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {lemmaSearchData.map((occurrence) => (
+                                                <TableRow key={occurrence.id}>
+                                                    <TableCell className="max-w-[300px] truncate">{occurrence.sentence}</TableCell>
+                                                    <TableCell>{occurrence.author}</TableCell>
+                                                    <TableCell>{occurrence.title}</TableCell>
+                                                    <TableCell>{occurrence.century}</TableCell>
+                                                    <TableCell>{occurrence.language_period}</TableCell>
+                                                    <TableCell>{occurrence.morphology}</TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            ) : (
+                                <div className="text-center text-muted-foreground py-8">
+                                    No occurrences found
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showPreverbMeaningSearch && selectedPreverbMeaning && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-background border border-border rounded-lg shadow-lg max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+                        <div className="p-6">
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-xl font-bold">
+                                    Preverb Meaning: &quot;{selectedPreverbMeaning}&quot; with {selectedPreverb}
+                                </h2>
+                                <button
+                                    onClick={closeSearchModals}
+                                    className="text-muted-foreground hover:text-foreground"
+                                >
+                                    ✕ Close
+                                </button>
+                            </div>
+                            {preverbMeaningSearchLoading ? (
+                                <LoadingSpinner />
+                            ) : preverbMeaningSearchError ? (
+                                <div className="text-red-500">{preverbMeaningSearchError.message}</div>
+                            ) : preverbMeaningSearchData && preverbMeaningSearchData.length > 0 ? (
+                                <div className="overflow-auto max-h-[60vh]">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Lemma</TableHead>
+                                                <TableHead>Sentence</TableHead>
+                                                <TableHead>Author</TableHead>
+                                                <TableHead>Title</TableHead>
+                                                <TableHead>Century</TableHead>
+                                                <TableHead>Period</TableHead>
+                                                <TableHead>Form</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {preverbMeaningSearchData.map((occurrence) => (
+                                                <TableRow key={occurrence.id}>
+                                                    <TableCell className="font-medium">{occurrence.lemma}</TableCell>
+                                                    <TableCell className="max-w-[300px] truncate">{occurrence.sentence}</TableCell>
+                                                    <TableCell>{occurrence.author}</TableCell>
+                                                    <TableCell>{occurrence.title}</TableCell>
+                                                    <TableCell>{occurrence.century}</TableCell>
+                                                    <TableCell>{occurrence.language_period}</TableCell>
+                                                    <TableCell>{occurrence.morphology}</TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            ) : (
+                                <div className="text-center text-muted-foreground py-8">
+                                    No occurrences found
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showVerbClassSearch && selectedVerbClass && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-background border border-border rounded-lg shadow-lg max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+                        <div className="p-6">
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-xl font-bold">
+                                    Verb Class: {selectedVerbClass} with {selectedPreverb}
+                                </h2>
+                                <button
+                                    onClick={closeSearchModals}
+                                    className="text-muted-foreground hover:text-foreground"
+                                >
+                                    ✕ Close
+                                </button>
+                            </div>
+                            {verbClassSearchLoading ? (
+                                <LoadingSpinner />
+                            ) : verbClassSearchError ? (
+                                <div className="text-red-500">{verbClassSearchError.message}</div>
+                            ) : verbClassSearchData && verbClassSearchData.length > 0 ? (
+                                <div className="overflow-auto max-h-[60vh]">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Lemma</TableHead>
+                                                <TableHead>Sentence</TableHead>
+                                                <TableHead>Author</TableHead>
+                                                <TableHead>Title</TableHead>
+                                                <TableHead>Century</TableHead>
+                                                <TableHead>Period</TableHead>
+                                                <TableHead>Form</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {verbClassSearchData.map((occurrence) => (
+                                                <TableRow key={occurrence.id}>
+                                                    <TableCell className="font-medium">{occurrence.lemma}</TableCell>
+                                                    <TableCell className="max-w-[300px] truncate">{occurrence.sentence}</TableCell>
+                                                    <TableCell>{occurrence.author}</TableCell>
+                                                    <TableCell>{occurrence.title}</TableCell>
+                                                    <TableCell>{occurrence.century}</TableCell>
+                                                    <TableCell>{occurrence.language_period}</TableCell>
+                                                    <TableCell>{occurrence.morphology}</TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            ) : (
+                                <div className="text-center text-muted-foreground py-8">
+                                    No occurrences found
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

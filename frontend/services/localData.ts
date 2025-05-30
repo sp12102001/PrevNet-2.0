@@ -21,12 +21,23 @@ interface LocalDataRecord {
     place: string;
     latitude: string;
     longitude: string;
+    morphology: string;
+    sr_role: string;
+    sr_expression: string;
 }
 
 // Extend the PreverbData interface to include preverb meanings
 interface LocalPreverbData extends PreverbData {
     preverb_meanings: { [key: string]: number };
     literal_meanings: { [key: string]: number };
+    verb_classes: { [key: string]: number };
+    spatial_relations: { [key: string]: number };
+    spatial_expressions: {
+        goal_expression: { [key: string]: number };
+        source_expression: { [key: string]: number };
+        path_expression: { [key: string]: number };
+        location_expression: { [key: string]: number };
+    };
     // Add detailed examples with complete metadata
     allExamples: Array<{
         lemma: string;
@@ -36,6 +47,12 @@ interface LocalPreverbData extends PreverbData {
         author: string;
         title: string;
         century: string;
+        language_period: string;
+        morphology: string;
+        verb_class: string;
+        preverb_semantics: string;
+        sr_role: string;
+        sr_expression: string;
     }>;
 }
 
@@ -96,12 +113,12 @@ export const useLocalPreverbs = () => {
     const [preverbs, setPreverbs] = useState<string[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<Error | null>(null);
-    const [language, setLanguage] = useState<Language>(currentLanguage);
+    const [language, _setLanguage] = useState<Language>(currentLanguage);
 
     // Listen for language changes
     useEffect(() => {
         const handleLanguageChange = () => {
-            setLanguage(currentLanguage);
+            _setLanguage(currentLanguage);
         };
 
         // Check for language changes periodically
@@ -176,12 +193,12 @@ export const useLocalPreverbData = (preverb: string | null) => {
     const [data, setData] = useState<LocalPreverbData | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<Error | null>(null);
-    const [language, setLanguage] = useState<Language>(currentLanguage);
+    const [language, _setLanguage] = useState<Language>(currentLanguage);
 
     // Listen for language changes
     useEffect(() => {
         const handleLanguageChange = () => {
-            setLanguage(currentLanguage);
+            _setLanguage(currentLanguage);
         };
 
         // Check for language changes periodically
@@ -292,6 +309,64 @@ export const useLocalPreverbData = (preverb: string | null) => {
                     }
                 });
 
+                // Count verb classes
+                const verbClasses: { [key: string]: number } = {};
+                filteredRecords.forEach(record => {
+                    if (record.verb_class && record.verb_class !== 'NA') {
+                        verbClasses[record.verb_class] = (verbClasses[record.verb_class] || 0) + 1;
+                    }
+                });
+
+                // Count spatial relations
+                const spatialRelations: { [key: string]: number } = {
+                    "GOAL": 0,
+                    "SOURCE": 0,
+                    "PATH": 0,
+                    "LOCATION": 0
+                };
+
+                // Count spatial expressions by type
+                const spatialExpressions = {
+                    goal_expression: {} as { [key: string]: number },
+                    source_expression: {} as { [key: string]: number },
+                    path_expression: {} as { [key: string]: number },
+                    location_expression: {} as { [key: string]: number }
+                };
+
+                filteredRecords.forEach(record => {
+                    if (record.sr_role && record.sr_role !== 'NA') {
+                        // Parse the sr_role array string
+                        const roles = record.sr_role.replace(/^\[|\]$/g, '').replace(/'/g, '').split(/,\s*/);
+                        const expressions = record.sr_expression && record.sr_expression !== 'NA'
+                            ? record.sr_expression.replace(/^\[|\]$/g, '').replace(/'/g, '').split(/,\s*/)
+                            : [];
+
+                        roles.forEach((role: string, index: number) => {
+                            const cleanRole = role.trim().toUpperCase();
+                            if (cleanRole && spatialRelations.hasOwnProperty(cleanRole)) {
+                                spatialRelations[cleanRole] += 1;
+
+                                // Also count the corresponding expression
+                                const expression = expressions[index] ? expressions[index].trim() : 'other';
+                                switch (cleanRole) {
+                                    case 'GOAL':
+                                        spatialExpressions.goal_expression[expression] = (spatialExpressions.goal_expression[expression] || 0) + 1;
+                                        break;
+                                    case 'SOURCE':
+                                        spatialExpressions.source_expression[expression] = (spatialExpressions.source_expression[expression] || 0) + 1;
+                                        break;
+                                    case 'PATH':
+                                        spatialExpressions.path_expression[expression] = (spatialExpressions.path_expression[expression] || 0) + 1;
+                                        break;
+                                    case 'LOCATION':
+                                        spatialExpressions.location_expression[expression] = (spatialExpressions.location_expression[expression] || 0) + 1;
+                                        break;
+                                }
+                            }
+                        });
+                    }
+                });
+
                 // Create examples
                 const lemmaToMeanings = new Map<string, { count: number, verb_semantics: string }>();
 
@@ -338,7 +413,13 @@ export const useLocalPreverbData = (preverb: string | null) => {
                         sentence: record.sentence,
                         author: record.author,
                         title: record.title,
-                        century: record.century
+                        century: record.century,
+                        language_period: record.language_period || 'Unknown',
+                        morphology: record.morphology || 'Unknown',
+                        verb_class: record.verb_class || 'Unknown',
+                        preverb_semantics: record.preverb_semantics || 'Unknown',
+                        sr_role: record.sr_role || 'NA',
+                        sr_expression: record.sr_expression || 'NA'
                     };
                 });
 
@@ -348,6 +429,9 @@ export const useLocalPreverbData = (preverb: string | null) => {
                     meanings,
                     preverb_meanings: preverbMeanings,
                     literal_meanings: literalMeanings,
+                    verb_classes: verbClasses,
+                    spatial_relations: spatialRelations,
+                    spatial_expressions: spatialExpressions,
                     total_occurrences: filteredRecords.length,
                     examples,
                     allExamples
@@ -506,4 +590,245 @@ export const useLocalMeaningData = (meaningId: string | null) => {
     }, [meaningId]);
 
     return { data, loading, error };
+};
+
+/**
+ * Search for occurrences by lemma and preverb
+ */
+export const useLocalLemmaSearch = (preverb: string | null, lemma: string | null) => {
+    const [data, setData] = useState<Array<{
+        id: string;
+        sentence: string;
+        author: string;
+        title: string;
+        century: string;
+        language_period: string;
+        morphology: string;
+        verb_class: string;
+        preverb_semantics: string;
+        verb_semantics: string;
+    }> | null>(null);
+    const [loading, setLoading] = useState<boolean>(false);
+    const [error, setError] = useState<Error | null>(null);
+    const [language, _setLanguage] = useState<Language>(currentLanguage);
+
+    useEffect(() => {
+        if (!preverb || !lemma) {
+            setData(null);
+            return;
+        }
+
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                const records = await loadData(language);
+
+                // Filter for the specific preverb and lemma
+                const matchingRecords = records.filter(
+                    record =>
+                        record.preverb.toLowerCase() === preverb.toLowerCase() &&
+                        record.lemma.toLowerCase() === lemma.toLowerCase()
+                );
+
+                if (matchingRecords.length === 0) {
+                    setData([]);
+                    setLoading(false);
+                    return;
+                }
+
+                // Create occurrences for display
+                const occurrences = matchingRecords.map((record, index) => ({
+                    id: `${preverb}_${lemma}_${index}`,
+                    sentence: record.sentence,
+                    author: record.author,
+                    title: record.title,
+                    century: record.century,
+                    language_period: record.language_period || 'Unknown',
+                    morphology: record.morphology || 'Unknown',
+                    verb_class: record.verb_class || 'Unknown',
+                    preverb_semantics: record.preverb_semantics || 'Unknown',
+                    verb_semantics: record.verb_semantics
+                        .replace(/^\[|\]$/g, '')
+                        .replace(/v#\d+\s*/g, '')
+                        .replace(/'/g, '')
+                        .trim()
+                }));
+
+                setData(occurrences);
+                setLoading(false);
+            } catch (error) {
+                console.error(`Error fetching lemma search data:`, error);
+                setError(error instanceof Error ? error : new Error('Failed to fetch lemma search data'));
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, [preverb, lemma, language]);
+
+    return { data, loading, error, language };
+};
+
+/**
+ * Search for occurrences by preverb and preverb meaning
+ */
+export const useLocalPreverbMeaningSearch = (preverb: string | null, meaning: string | null) => {
+    const [data, setData] = useState<Array<{
+        id: string;
+        lemma: string;
+        sentence: string;
+        author: string;
+        title: string;
+        century: string;
+        language_period: string;
+        morphology: string;
+        verb_class: string;
+        preverb_semantics: string;
+        verb_semantics: string;
+    }> | null>(null);
+    const [loading, setLoading] = useState<boolean>(false);
+    const [error, setError] = useState<Error | null>(null);
+    const [language, _setLanguage] = useState<Language>(currentLanguage);
+
+    useEffect(() => {
+        if (!preverb || !meaning) {
+            setData(null);
+            return;
+        }
+
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                const records = await loadData(language);
+
+                // Filter for the specific preverb and preverb meaning
+                const matchingRecords = records.filter(record => {
+                    if (record.preverb.toLowerCase() !== preverb.toLowerCase()) return false;
+                    if (!record.preverb_semantics) return false;
+
+                    // Check if the preverb semantics contains the specific meaning
+                    const semantics = record.preverb_semantics.split(/,\s*/);
+                    return semantics.some(semantic => {
+                        const cleanSemantic = semantic.trim().replace(/ ?\(malefactive\)/g, '').trim();
+                        return cleanSemantic.toLowerCase() === meaning.toLowerCase();
+                    });
+                });
+
+                if (matchingRecords.length === 0) {
+                    setData([]);
+                    setLoading(false);
+                    return;
+                }
+
+                // Create occurrences for display
+                const occurrences = matchingRecords.map((record, index) => ({
+                    id: `${preverb}_${meaning}_${index}`,
+                    lemma: record.lemma,
+                    sentence: record.sentence,
+                    author: record.author,
+                    title: record.title,
+                    century: record.century,
+                    language_period: record.language_period || 'Unknown',
+                    morphology: record.morphology || 'Unknown',
+                    verb_class: record.verb_class || 'Unknown',
+                    preverb_semantics: record.preverb_semantics || 'Unknown',
+                    verb_semantics: record.verb_semantics
+                        .replace(/^\[|\]$/g, '')
+                        .replace(/v#\d+\s*/g, '')
+                        .replace(/'/g, '')
+                        .trim()
+                }));
+
+                setData(occurrences);
+                setLoading(false);
+            } catch (error) {
+                console.error(`Error fetching preverb meaning search data:`, error);
+                setError(error instanceof Error ? error : new Error('Failed to fetch preverb meaning search data'));
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, [preverb, meaning, language]);
+
+    return { data, loading, error, language };
+};
+
+/**
+ * Search for occurrences by verb class
+ */
+export const useLocalVerbClassSearch = (preverb: string | null, verbClass: string | null) => {
+    const [data, setData] = useState<Array<{
+        id: string;
+        lemma: string;
+        sentence: string;
+        author: string;
+        title: string;
+        century: string;
+        language_period: string;
+        morphology: string;
+        verb_class: string;
+        preverb_semantics: string;
+        verb_semantics: string;
+    }> | null>(null);
+    const [loading, setLoading] = useState<boolean>(false);
+    const [error, setError] = useState<Error | null>(null);
+    const [language, _setLanguage] = useState<Language>(currentLanguage);
+
+    useEffect(() => {
+        if (!preverb || !verbClass) {
+            setData(null);
+            return;
+        }
+
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                const records = await loadData(language);
+
+                // Filter for the specific preverb and verb class
+                const matchingRecords = records.filter(
+                    record =>
+                        record.preverb.toLowerCase() === preverb.toLowerCase() &&
+                        record.verb_class === verbClass
+                );
+
+                if (matchingRecords.length === 0) {
+                    setData([]);
+                    setLoading(false);
+                    return;
+                }
+
+                // Create occurrences for display
+                const occurrences = matchingRecords.map((record, index) => ({
+                    id: `${preverb}_${verbClass}_${index}`,
+                    lemma: record.lemma,
+                    sentence: record.sentence,
+                    author: record.author,
+                    title: record.title,
+                    century: record.century,
+                    language_period: record.language_period || 'Unknown',
+                    morphology: record.morphology || 'Unknown',
+                    verb_class: record.verb_class || 'Unknown',
+                    preverb_semantics: record.preverb_semantics || 'Unknown',
+                    verb_semantics: record.verb_semantics
+                        .replace(/^\[|\]$/g, '')
+                        .replace(/v#\d+\s*/g, '')
+                        .replace(/'/g, '')
+                        .trim()
+                }));
+
+                setData(occurrences);
+                setLoading(false);
+            } catch (error) {
+                console.error(`Error fetching verb class search data:`, error);
+                setError(error instanceof Error ? error : new Error('Failed to fetch verb class search data'));
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, [preverb, verbClass, language]);
+
+    return { data, loading, error, language };
 };
