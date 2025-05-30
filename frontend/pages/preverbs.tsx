@@ -716,7 +716,7 @@ const PreverbDashboard = () => {
                                     <CardContent className="pt-2">
                                         {/* Verb Classes View */}
                                         {showVerbClasses && preverbData?.verb_classes ? (
-                                            <div className="h-[320px]">
+                                            <div className="h-[320px]" role="region" aria-label="Verb semantic classes chart">
                                                 <ResponsiveContainer width="100%" height="100%">
                                                     <BarChart
                                                         data={prepareChartData(preverbData.verb_classes).slice(0, 7)}
@@ -850,7 +850,7 @@ const PreverbDashboard = () => {
                                                         href={`/spatial-relations/${encodeURIComponent(selectedPreverb || '')}`}
                                                         className="bg-secondary hover:bg-secondary/80 text-secondary-foreground px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
                                                     >
-                                                        Spatial Relations
+                                                        INSERT
                                                     </Link>
                                                 </div>
                                                 <div className="text-sm text-muted-foreground">

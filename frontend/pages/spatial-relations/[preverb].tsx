@@ -97,6 +97,11 @@ const SpatialRelationsPage = () => {
     ];
 
     const prepareSpatialData = (data: { [key: string]: number }) => {
+        // Handle undefined or null data gracefully
+        if (!data || typeof data !== 'object') {
+            return [];
+        }
+
         return Object.entries(data)
             .filter(([_, value]) => value > 0)
             .map(([name, value]) => ({ name, value }))
@@ -104,6 +109,11 @@ const SpatialRelationsPage = () => {
     };
 
     const prepareExpressionData = (expressions: { [key: string]: number }) => {
+        // Handle undefined or null expressions gracefully
+        if (!expressions || typeof expressions !== 'object') {
+            return [];
+        }
+
         return Object.entries(expressions)
             .filter(([_, value]) => value > 0)
             .map(([name, value]) => ({ name, value }))
@@ -115,16 +125,27 @@ const SpatialRelationsPage = () => {
         setSelectedExpression(null);
         setCurrentPage(1);
 
-        if (preverbData?.allExamples) {
+        if (preverbData?.allExamples && Array.isArray(preverbData.allExamples)) {
             const filtered = preverbData.allExamples.filter(example => {
-                if (example.sr_role === 'NA') return false;
-                const roles = example.sr_role.replace(/^\[|\]$/g, '').replace(/'/g, '').split(/,\s*/);
-                return roles.some(role => role.trim().toUpperCase() === relationType.toUpperCase());
+                // Handle missing or invalid sr_role data
+                if (!example.sr_role || example.sr_role === 'NA' || typeof example.sr_role !== 'string') return false;
+
+                try {
+                    const roles = example.sr_role.replace(/^\[|\]$/g, '').replace(/'/g, '').split(/,\s*/);
+                    return roles.some(role => role.trim().toUpperCase() === relationType.toUpperCase());
+                } catch (error) {
+                    console.warn('Error processing sr_role data:', error);
+                    return false;
+                }
             });
             setFilteredOccurrences(filtered.map((example, index) => ({
-                id: `${example.meaning_id}_${index}`,
+                id: `${example.meaning_id || 'unknown'}_${index}`,
                 ...example
             })));
+            setShowOccurrences(true);
+        } else {
+            // Handle case where allExamples is not available
+            setFilteredOccurrences([]);
             setShowOccurrences(true);
         }
     };
@@ -134,22 +155,36 @@ const SpatialRelationsPage = () => {
         setSelectedExpression(expression);
         setCurrentPage(1);
 
-        if (preverbData?.allExamples) {
+        if (preverbData?.allExamples && Array.isArray(preverbData.allExamples)) {
             const filtered = preverbData.allExamples.filter(example => {
-                if (example.sr_role === 'NA' || example.sr_expression === 'NA') return false;
+                // Handle missing or invalid data
+                if (!example.sr_role || example.sr_role === 'NA' ||
+                    !example.sr_expression || example.sr_expression === 'NA' ||
+                    typeof example.sr_role !== 'string' || typeof example.sr_expression !== 'string') {
+                    return false;
+                }
 
-                const roles = example.sr_role.replace(/^\[|\]$/g, '').replace(/'/g, '').split(/,\s*/);
-                const expressions = example.sr_expression.replace(/^\[|\]$/g, '').replace(/'/g, '').split(/,\s*/);
+                try {
+                    const roles = example.sr_role.replace(/^\[|\]$/g, '').replace(/'/g, '').split(/,\s*/);
+                    const expressions = example.sr_expression.replace(/^\[|\]$/g, '').replace(/'/g, '').split(/,\s*/);
 
-                return roles.some((role, index) =>
-                    role.trim().toUpperCase() === relationType.toUpperCase() &&
-                    expressions[index]?.trim() === expression
-                );
+                    return roles.some((role, index) =>
+                        role.trim().toUpperCase() === relationType.toUpperCase() &&
+                        expressions[index]?.trim() === expression
+                    );
+                } catch (error) {
+                    console.warn('Error processing spatial relation data:', error);
+                    return false;
+                }
             });
             setFilteredOccurrences(filtered.map((example, index) => ({
-                id: `${example.meaning_id}_${index}`,
+                id: `${example.meaning_id || 'unknown'}_${index}`,
                 ...example
             })));
+            setShowOccurrences(true);
+        } else {
+            // Handle case where allExamples is not available
+            setFilteredOccurrences([]);
             setShowOccurrences(true);
         }
     };
@@ -241,77 +276,115 @@ const SpatialRelationsPage = () => {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="h-[300px]">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart
-                                    data={prepareSpatialData(preverbData.spatial_relations)}
-                                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                                >
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="name" />
-                                    <YAxis />
-                                    <Tooltip content={<CustomTooltip />} />
-                                    <Bar
-                                        dataKey="value"
-                                        fill="#3498db"
-                                        onClick={(data) => handleSpatialRelationClick(data.name)}
-                                        style={{ cursor: 'pointer' }}
+                        {preverbData?.spatial_relations && prepareSpatialData(preverbData.spatial_relations).length > 0 ? (
+                            <div className="h-[300px]">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart
+                                        data={prepareSpatialData(preverbData.spatial_relations)}
+                                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                                     >
-                                        {prepareSpatialData(preverbData.spatial_relations).map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                        ))}
-                                    </Bar>
-                                </BarChart>
-                            </ResponsiveContainer>
-                        </div>
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis dataKey="name" />
+                                        <YAxis />
+                                        <Tooltip content={<CustomTooltip />} />
+                                        <Bar
+                                            dataKey="value"
+                                            fill="#3498db"
+                                            onClick={(data) => handleSpatialRelationClick(data.name)}
+                                            style={{ cursor: 'pointer' }}
+                                        >
+                                            {prepareSpatialData(preverbData.spatial_relations).map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                            ))}
+                                        </Bar>
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center h-[300px] text-muted-foreground">
+                                <div className="text-4xl mb-4">📊</div>
+                                <p className="text-lg font-medium">No spatial relations data available</p>
+                                <p className="text-sm mt-2">Spatial relations data for this preverb is not yet available or is being processed.</p>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 
                 {/* Spatial Expression Encoding */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {Object.entries(preverbData.spatial_expressions).map(([type, expressions]) => {
-                        const relationType = type.replace('_expression', '').toUpperCase();
-                        const data = prepareExpressionData(expressions);
+                    {preverbData?.spatial_expressions && Object.keys(preverbData.spatial_expressions).length > 0 ? (
+                        Object.entries(preverbData.spatial_expressions).map(([type, expressions]) => {
+                            const relationType = type.replace('_expression', '').toUpperCase();
+                            const data = prepareExpressionData(expressions);
 
-                        if (data.length === 0) return null;
+                            if (data.length === 0) return null;
 
-                        return (
-                            <Card key={type}>
-                                <CardHeader>
-                                    <CardTitle>{relationType} Expressions</CardTitle>
-                                    <CardDescription>
-                                        Syntactic encoding of {relationType.toLowerCase()} relations
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="h-[250px]">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <BarChart
-                                                data={data}
-                                                layout="vertical"
-                                                margin={{ top: 5, right: 30, left: 80, bottom: 5 }}
-                                            >
-                                                <CartesianGrid strokeDasharray="3 3" />
-                                                <XAxis type="number" />
-                                                <YAxis type="category" dataKey="name" width={70} />
-                                                <Tooltip content={<CustomTooltip />} />
-                                                <Bar
-                                                    dataKey="value"
-                                                    fill="#2ecc71"
-                                                    onClick={(data) => handleExpressionClick(relationType, data.name)}
-                                                    style={{ cursor: 'pointer' }}
+                            return (
+                                <Card key={type}>
+                                    <CardHeader>
+                                        <CardTitle>{relationType} Expressions</CardTitle>
+                                        <CardDescription>
+                                            Syntactic encoding of {relationType.toLowerCase()} relations
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="h-[250px]">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <BarChart
+                                                    data={data}
+                                                    layout="vertical"
+                                                    margin={{ top: 5, right: 30, left: 80, bottom: 5 }}
                                                 >
-                                                    {data.map((entry, index) => (
-                                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                                    ))}
-                                                </Bar>
-                                            </BarChart>
-                                        </ResponsiveContainer>
+                                                    <CartesianGrid strokeDasharray="3 3" />
+                                                    <XAxis type="number" />
+                                                    <YAxis type="category" dataKey="name" width={70} />
+                                                    <Tooltip content={<CustomTooltip />} />
+                                                    <Bar
+                                                        dataKey="value"
+                                                        fill="#2ecc71"
+                                                        onClick={(data) => handleExpressionClick(relationType, data.name)}
+                                                        style={{ cursor: 'pointer' }}
+                                                    >
+                                                        {data.map((entry, index) => (
+                                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                        ))}
+                                                    </Bar>
+                                                </BarChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            );
+                        })
+                    ) : (
+                        <div className="col-span-full">
+                            <Card>
+                                <CardContent>
+                                    <div className="flex flex-col items-center justify-center h-[250px] text-muted-foreground">
+                                        <div className="text-4xl mb-4">🔧</div>
+                                        <p className="text-lg font-medium">No spatial expression data available</p>
+                                        <p className="text-sm mt-2">Spatial expression encoding data for this preverb is not yet available or is being processed.</p>
                                     </div>
                                 </CardContent>
                             </Card>
-                        );
-                    })}
+                        </div>
+                    )}
+
+                    {/* If there are expressions but they all result in empty data, show a message */}
+                    {preverbData?.spatial_expressions && Object.keys(preverbData.spatial_expressions).length > 0 &&
+                     Object.entries(preverbData.spatial_expressions).every(([_, expressions]) => prepareExpressionData(expressions).length === 0) && (
+                        <div className="col-span-full">
+                            <Card>
+                                <CardContent>
+                                    <div className="flex flex-col items-center justify-center h-[250px] text-muted-foreground">
+                                        <div className="text-4xl mb-4">📋</div>
+                                        <p className="text-lg font-medium">No spatial expressions found</p>
+                                        <p className="text-sm mt-2">This preverb does not have recorded spatial expression data in the corpus.</p>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    )}
                 </div>
 
                 {/* Occurrences Table */}
@@ -411,32 +484,46 @@ const SpatialRelationsPage = () => {
 
                             {/* Table */}
                             <div className="overflow-auto max-h-[400px] rounded-md border">
-                                <Table>
-                                    <TableHeader className="sticky top-0 bg-background z-10">
-                                        <TableRow>
-                                            <TableHead>Lemma</TableHead>
-                                            <TableHead>Sentence</TableHead>
-                                            <TableHead>Author</TableHead>
-                                            <TableHead>Work</TableHead>
-                                            <TableHead>Century</TableHead>
-                                            <TableHead>Period</TableHead>
-                                            <TableHead>Form</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {paginatedOccurrences.map((occurrence) => (
-                                            <TableRow key={occurrence.id}>
-                                                <TableCell className="font-medium">{occurrence.lemma}</TableCell>
-                                                <TableCell className="max-w-[300px] truncate">{occurrence.sentence}</TableCell>
-                                                <TableCell>{occurrence.author}</TableCell>
-                                                <TableCell>{occurrence.title}</TableCell>
-                                                <TableCell>{occurrence.century}</TableCell>
-                                                <TableCell>{occurrence.language_period}</TableCell>
-                                                <TableCell>{occurrence.morphology}</TableCell>
+                                {paginatedOccurrences.length > 0 ? (
+                                    <Table>
+                                        <TableHeader className="sticky top-0 bg-background z-10">
+                                            <TableRow>
+                                                <TableHead>Lemma</TableHead>
+                                                <TableHead>Sentence</TableHead>
+                                                <TableHead>Author</TableHead>
+                                                <TableHead>Work</TableHead>
+                                                <TableHead>Century</TableHead>
+                                                <TableHead>Period</TableHead>
+                                                <TableHead>Form</TableHead>
                                             </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {paginatedOccurrences.map((occurrence) => (
+                                                <TableRow key={occurrence.id}>
+                                                    <TableCell className="font-medium">{occurrence.lemma || 'N/A'}</TableCell>
+                                                    <TableCell className="max-w-[300px] truncate">{occurrence.sentence || 'N/A'}</TableCell>
+                                                    <TableCell>{occurrence.author || 'N/A'}</TableCell>
+                                                    <TableCell>{occurrence.title || 'N/A'}</TableCell>
+                                                    <TableCell>{occurrence.century || 'N/A'}</TableCell>
+                                                    <TableCell>{occurrence.language_period || 'N/A'}</TableCell>
+                                                    <TableCell>{occurrence.morphology || 'N/A'}</TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center h-[200px] text-muted-foreground">
+                                        <div className="text-3xl mb-3">🔍</div>
+                                        <p className="text-lg font-medium">No occurrences found</p>
+                                        <p className="text-sm mt-2 text-center">
+                                            {selectedExpression
+                                                ? `No examples found for ${selectedRelationType} with "${selectedExpression}" expression`
+                                                : `No examples found for ${selectedRelationType} relations`
+                                            }
+                                        </p>
+                                        <p className="text-xs mt-2 text-center">Try adjusting your filters or check back later as more data is added.</p>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Pagination */}
