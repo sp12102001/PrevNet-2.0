@@ -22,8 +22,8 @@ interface LocalDataRecord {
     latitude: string;
     longitude: string;
     morphology: string;
-    sr_role: string;
-    sr_expression: string;
+    spatial_relation_role: string;
+    spatial_relation_expression: string;
 }
 
 // Extend the PreverbData interface to include preverb meanings
@@ -51,8 +51,8 @@ interface LocalPreverbData extends PreverbData {
         morphology: string;
         verb_class: string;
         preverb_semantics: string;
-        sr_role: string;
-        sr_expression: string;
+        spatial_relation_role: string;
+        spatial_relation_expression: string;
     }>;
 }
 
@@ -334,11 +334,11 @@ export const useLocalPreverbData = (preverb: string | null) => {
                 };
 
                 filteredRecords.forEach(record => {
-                    if (record.sr_role && record.sr_role !== 'NA') {
-                        // Parse the sr_role array string
-                        const roles = record.sr_role.replace(/^\[|\]$/g, '').replace(/'/g, '').split(/,\s*/);
-                        const expressions = record.sr_expression && record.sr_expression !== 'NA'
-                            ? record.sr_expression.replace(/^\[|\]$/g, '').replace(/'/g, '').split(/,\s*/)
+                    if (record.spatial_relation_role && record.spatial_relation_role !== 'NA') {
+                        // Parse the spatial_relation_role array string
+                        const roles = record.spatial_relation_role.replace(/^\[|\]$/g, '').replace(/'/g, '').split(/,\s*/);
+                        const expressions = record.spatial_relation_expression && record.spatial_relation_expression !== 'NA'
+                            ? record.spatial_relation_expression.replace(/^\[|\]$/g, '').replace(/'/g, '').split(/,\s*/)
                             : [];
 
                         roles.forEach((role: string, index: number) => {
@@ -418,8 +418,8 @@ export const useLocalPreverbData = (preverb: string | null) => {
                         morphology: record.morphology || 'Unknown',
                         verb_class: record.verb_class || 'Unknown',
                         preverb_semantics: record.preverb_semantics || 'Unknown',
-                        sr_role: record.sr_role || 'NA',
-                        sr_expression: record.sr_expression || 'NA'
+                        spatial_relation_role: record.spatial_relation_role || 'NA',
+                        spatial_relation_expression: record.spatial_relation_expression || 'NA'
                     };
                 });
 

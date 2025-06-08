@@ -48,6 +48,7 @@ export interface DatasetRecord {
     century: string;
     meaning_id: string;
     verb_semantics: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [key: string]: any; // Allow for other fields
 }
 

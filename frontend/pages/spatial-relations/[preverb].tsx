@@ -64,8 +64,8 @@ interface SpatialOccurrence {
     morphology: string;
     verb_class: string;
     preverb_semantics: string;
-    sr_role: string;
-    sr_expression: string;
+    spatial_relation_role: string;
+    spatial_relation_expression: string;
 }
 
 const SpatialRelationsPage = () => {
@@ -127,14 +127,14 @@ const SpatialRelationsPage = () => {
 
         if (preverbData?.allExamples && Array.isArray(preverbData.allExamples)) {
             const filtered = preverbData.allExamples.filter(example => {
-                // Handle missing or invalid sr_role data
-                if (!example.sr_role || example.sr_role === 'NA' || typeof example.sr_role !== 'string') return false;
+                // Handle missing or invalid spatial_relation_role data
+                if (!example.spatial_relation_role || example.spatial_relation_role === 'NA' || typeof example.spatial_relation_role !== 'string') return false;
 
                 try {
-                    const roles = example.sr_role.replace(/^\[|\]$/g, '').replace(/'/g, '').split(/,\s*/);
-                    return roles.some(role => role.trim().toUpperCase() === relationType.toUpperCase());
+                    const roles = example.spatial_relation_role.replace(/^\[|\]$/g, '').replace(/'/g, '').split(/,\s*/);
+                    return roles.some((role: string) => role.trim().toUpperCase() === relationType.toUpperCase());
                 } catch (error) {
-                    console.warn('Error processing sr_role data:', error);
+                    console.warn('Error processing spatial_relation_role data:', error);
                     return false;
                 }
             });
@@ -158,17 +158,17 @@ const SpatialRelationsPage = () => {
         if (preverbData?.allExamples && Array.isArray(preverbData.allExamples)) {
             const filtered = preverbData.allExamples.filter(example => {
                 // Handle missing or invalid data
-                if (!example.sr_role || example.sr_role === 'NA' ||
-                    !example.sr_expression || example.sr_expression === 'NA' ||
-                    typeof example.sr_role !== 'string' || typeof example.sr_expression !== 'string') {
+                if (!example.spatial_relation_role || example.spatial_relation_role === 'NA' ||
+                    !example.spatial_relation_expression || example.spatial_relation_expression === 'NA' ||
+                    typeof example.spatial_relation_role !== 'string' || typeof example.spatial_relation_expression !== 'string') {
                     return false;
                 }
 
                 try {
-                    const roles = example.sr_role.replace(/^\[|\]$/g, '').replace(/'/g, '').split(/,\s*/);
-                    const expressions = example.sr_expression.replace(/^\[|\]$/g, '').replace(/'/g, '').split(/,\s*/);
+                    const roles = example.spatial_relation_role.replace(/^\[|\]$/g, '').replace(/'/g, '').split(/,\s*/);
+                    const expressions = example.spatial_relation_expression.replace(/^\[|\]$/g, '').replace(/'/g, '').split(/,\s*/);
 
-                    return roles.some((role, index) =>
+                    return roles.some((role: string, index: number) =>
                         role.trim().toUpperCase() === relationType.toUpperCase() &&
                         expressions[index]?.trim() === expression
                     );
