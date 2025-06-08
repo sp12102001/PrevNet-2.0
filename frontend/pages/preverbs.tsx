@@ -32,6 +32,7 @@ import Link from "next/link";
 import { useLocalPreverbs, useLocalPreverbData, useLocalLemmaSearch, useLocalPreverbMeaningSearch, useLocalVerbClassSearch } from '@/services/localData';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorFallback from '@/components/ErrorFallback';
+import { formatCentury } from '@/utils/formatters';
 
 // Modern color palette - vibrant but professional
 const COLORS = [
@@ -932,9 +933,9 @@ const PreverbDashboard = () => {
                                                                         <TableCell>
                                                                             {isDetailedExample(example) ? example.title : 'N/A'}
                                                                         </TableCell>
-                                                                        <TableCell>
-                                                                            {isDetailedExample(example) ? example.century : 'N/A'}
-                                                                        </TableCell>
+                                                                                                                                <TableCell>
+                                                            {isDetailedExample(example) ? formatCentury(example.century) : 'N/A'}
+                                                        </TableCell>
                                                                         <TableCell>
                                                                             {isDetailedExample(example) && 'language_period' in example ? String(example.language_period) : 'N/A'}
                                                                         </TableCell>
@@ -1177,7 +1178,7 @@ const PreverbDashboard = () => {
                                                     <TableCell className="max-w-[300px] truncate">{occurrence.sentence}</TableCell>
                                                     <TableCell>{occurrence.author}</TableCell>
                                                     <TableCell>{occurrence.title}</TableCell>
-                                                    <TableCell>{occurrence.century}</TableCell>
+                                                    <TableCell>{formatCentury(occurrence.century)}</TableCell>
                                                     <TableCell>{occurrence.language_period}</TableCell>
                                                     <TableCell>{occurrence.morphology}</TableCell>
                                                     <TableCell>
@@ -1345,7 +1346,7 @@ const PreverbDashboard = () => {
                                                     <TableCell className="max-w-[300px] truncate">{occurrence.sentence}</TableCell>
                                                     <TableCell>{occurrence.author}</TableCell>
                                                     <TableCell>{occurrence.title}</TableCell>
-                                                    <TableCell>{occurrence.century}</TableCell>
+                                                    <TableCell>{formatCentury(occurrence.century)}</TableCell>
                                                     <TableCell>{occurrence.language_period}</TableCell>
                                                     <TableCell>{occurrence.morphology}</TableCell>
                                                     <TableCell>
@@ -1513,7 +1514,7 @@ const PreverbDashboard = () => {
                                                     <TableCell className="max-w-[300px] truncate">{occurrence.sentence}</TableCell>
                                                     <TableCell>{occurrence.author}</TableCell>
                                                     <TableCell>{occurrence.title}</TableCell>
-                                                    <TableCell>{occurrence.century}</TableCell>
+                                                    <TableCell>{formatCentury(occurrence.century)}</TableCell>
                                                     <TableCell>{occurrence.language_period}</TableCell>
                                                     <TableCell>{occurrence.morphology}</TableCell>
                                                     <TableCell>

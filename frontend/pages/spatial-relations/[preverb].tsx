@@ -29,6 +29,7 @@ import { useLocalPreverbData } from '@/services/localData';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorFallback from '@/components/ErrorFallback';
 import BackButton from '@/components/BackButton';
+import { formatCentury } from '@/utils/formatters';
 
 // Color palette
 const COLORS = [
@@ -89,7 +90,7 @@ const SpatialRelationsPage = () => {
 
     const { data: preverbData, loading, error } = useLocalPreverbData(preverb as string);
 
-    // Define century order for sorting
+    // Define century order for sorting (with original "cent." prefix for internal comparison)
     const centuryOrder = [
         'cent. 3 BCE', 'cent. 2 BCE', 'cent. 1 BCE',
         'cent. 1 CE', 'cent. 2 CE', 'cent. 3 CE',
@@ -450,9 +451,9 @@ const SpatialRelationsPage = () => {
                                         className="w-full px-3 py-2 border border-border rounded-md bg-background"
                                         title="Filter occurrences by century"
                                     >
-                                        <option value="">All Centuries</option>
+                                                                                                <option value="">All Centuries</option>
                                         {getUniqueValues('century').map(century => (
-                                            <option key={century} value={century}>{century}</option>
+                                            <option key={century} value={century}>{formatCentury(century)}</option>
                                         ))}
                                     </select>
                                 </div>
@@ -505,7 +506,7 @@ const SpatialRelationsPage = () => {
                                                     <TableCell className="max-w-[300px] truncate">{occurrence.sentence || 'N/A'}</TableCell>
                                                     <TableCell>{occurrence.author || 'N/A'}</TableCell>
                                                     <TableCell>{occurrence.title || 'N/A'}</TableCell>
-                                                    <TableCell>{occurrence.century || 'N/A'}</TableCell>
+                                                    <TableCell>{formatCentury(occurrence.century || 'N/A')}</TableCell>
                                                     <TableCell>{occurrence.language_period || 'N/A'}</TableCell>
                                                     <TableCell>{occurrence.morphology || 'N/A'}</TableCell>
                                                     <TableCell>
