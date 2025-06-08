@@ -140,9 +140,27 @@ interface DetailedExample extends ExampleBase {
     author: string;
     title: string;
     century: string;
+    language_period?: string;
+    morphology?: string;
+    passage?: string;
 }
 
 type Example = SummaryExample | DetailedExample;
+
+interface SearchOccurrence {
+    id: string;
+    lemma?: string;
+    sentence: string;
+    author: string;
+    title: string;
+    century: string;
+    language_period: string;
+    morphology: string;
+    verb_class: string;
+    preverb_semantics: string;
+    verb_semantics: string;
+    passage?: string;
+}
 
 // Custom tick rendering for Y axis
 const renderCustomYAxisTick = (props: {
@@ -244,9 +262,9 @@ const PreverbDashboard = () => {
     const [showVerbClasses, setShowVerbClasses] = useState(false);
 
     // Search hooks
-    const { data: lemmaSearchData, loading: lemmaSearchLoading, error: lemmaSearchError } = useLocalLemmaSearch(selectedPreverb, selectedLemma);
-    const { data: preverbMeaningSearchData, loading: preverbMeaningSearchLoading, error: preverbMeaningSearchError } = useLocalPreverbMeaningSearch(selectedPreverb, selectedPreverbMeaning);
-    const { data: verbClassSearchData, loading: verbClassSearchLoading, error: verbClassSearchError } = useLocalVerbClassSearch(selectedPreverb, selectedVerbClass);
+    const { data: lemmaSearchData, loading: lemmaSearchLoading, error: _lemmaSearchError } = useLocalLemmaSearch(selectedPreverb, selectedLemma);
+    const { data: preverbMeaningSearchData, loading: preverbMeaningSearchLoading, error: _preverbMeaningSearchError } = useLocalPreverbMeaningSearch(selectedPreverb, selectedPreverbMeaning);
+    const { data: verbClassSearchData, loading: verbClassSearchLoading, error: _verbClassSearchError } = useLocalVerbClassSearch(selectedPreverb, selectedVerbClass);
 
     // Handle pie slice hover
     const onPieEnter = (data: unknown, index: number, pieIndex: number) => {
@@ -871,6 +889,7 @@ const PreverbDashboard = () => {
                                                                     <TableHead>Century</TableHead>
                                                                     <TableHead>Period</TableHead>
                                                                     <TableHead>Form</TableHead>
+                                                                    <TableHead>Translation</TableHead>
                                                                 </>
                                                             ) : (
                                                                 <TableHead className="w-[80px] text-right">Count</TableHead>
@@ -921,6 +940,26 @@ const PreverbDashboard = () => {
                                                                         </TableCell>
                                                                         <TableCell>
                                                                             {isDetailedExample(example) && 'morphology' in example ? String(example.morphology) : 'N/A'}
+                                                                        </TableCell>
+                                                                        <TableCell>
+                                                                            {isDetailedExample(example) && 'passage' in example && (example as DetailedExample).passage ? (
+                                                                                <a
+                                                                                    href={(example as DetailedExample).passage}
+                                                                                    target="_blank"
+                                                                                    rel="noopener noreferrer"
+                                                                                    className="text-primary hover:text-primary/80 hover:underline flex items-center gap-1"
+                                                                                    aria-label="View translation on Perseus"
+                                                                                >
+                                                                                    Perseus
+                                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                                                        <path d="M15 3h6v6"></path>
+                                                                                        <path d="M10 14L21 3"></path>
+                                                                                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2h6"></path>
+                                                                                    </svg>
+                                                                                </a>
+                                                                            ) : (
+                                                                                'N/A'
+                                                                            )}
                                                                         </TableCell>
                                                                     </>
                                                                 ) : (
@@ -1012,11 +1051,11 @@ const PreverbDashboard = () => {
             {/* Search Modals */}
             {showLemmaSearch && selectedLemma && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-background border border-border rounded-lg shadow-lg max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+                    <div className="bg-background border border-border rounded-lg shadow-lg max-w-6xl w-full mx-4 max-h-[80vh] overflow-y-auto">
                         <div className="p-6">
                             <div className="flex justify-between items-center mb-4">
                                 <h2 className="text-xl font-bold">
-                                    Lemma: {selectedLemma} with {selectedPreverb}
+                                    Lemma: &quot;{selectedLemma}&quot; with {selectedPreverb}
                                 </h2>
                                 <button
                                     onClick={closeSearchModals}
@@ -1025,21 +1064,111 @@ const PreverbDashboard = () => {
                                     ✕ Close
                                 </button>
                             </div>
+
                             {lemmaSearchLoading ? (
-                                <LoadingSpinner />
-                            ) : lemmaSearchError ? (
-                                <div className="text-red-500">{lemmaSearchError.message}</div>
+                                <div className="text-center py-8">
+                                    <LoadingSpinner />
+                                </div>
                             ) : lemmaSearchData && lemmaSearchData.length > 0 ? (
-                                <div className="overflow-auto max-h-[60vh]">
+                                <div>
+                                    {/* Visualizations */}
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                                        {/* Language Period Distribution */}
+                                        <Card>
+                                            <CardHeader className="pb-2">
+                                                <CardTitle className="text-lg">Distribution by Language Period</CardTitle>
+                                            </CardHeader>
+                                            <CardContent>
+                                                <div className="h-[200px]">
+                                                    <ResponsiveContainer width="100%" height="100%">
+                                                        <BarChart
+                                                            data={Object.entries(
+                                                                lemmaSearchData.reduce((acc, occ) => {
+                                                                    acc[occ.language_period] = (acc[occ.language_period] || 0) + 1;
+                                                                    return acc;
+                                                                }, {} as Record<string, number>)
+                                                            ).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value)}
+                                                            margin={{ top: 5, right: 30, left: 20, bottom: 60 }}
+                                                        >
+                                                            <XAxis
+                                                                dataKey="name"
+                                                                angle={-45}
+                                                                textAnchor="end"
+                                                                height={60}
+                                                                interval={0}
+                                                            />
+                                                            <YAxis />
+                                                            <Tooltip content={<CustomTooltip />} />
+                                                            <Bar dataKey="value" fill="#3498db">
+                                                                {Object.entries(
+                                                                    lemmaSearchData.reduce((acc, occ) => {
+                                                                        acc[occ.language_period] = (acc[occ.language_period] || 0) + 1;
+                                                                        return acc;
+                                                                    }, {} as Record<string, number>)
+                                                                ).map((_, index) => (
+                                                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                                ))}
+                                                            </Bar>
+                                                        </BarChart>
+                                                    </ResponsiveContainer>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+
+                                        {/* Author Distribution */}
+                                        <Card>
+                                            <CardHeader className="pb-2">
+                                                <CardTitle className="text-lg">Distribution by Author</CardTitle>
+                                            </CardHeader>
+                                            <CardContent>
+                                                <div className="h-[200px]">
+                                                    <ResponsiveContainer width="100%" height="100%">
+                                                        <BarChart
+                                                            data={Object.entries(
+                                                                lemmaSearchData.reduce((acc, occ) => {
+                                                                    acc[occ.author] = (acc[occ.author] || 0) + 1;
+                                                                    return acc;
+                                                                }, {} as Record<string, number>)
+                                                            ).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 10)}
+                                                            margin={{ top: 5, right: 30, left: 20, bottom: 60 }}
+                                                        >
+                                                            <XAxis
+                                                                dataKey="name"
+                                                                angle={-45}
+                                                                textAnchor="end"
+                                                                height={60}
+                                                                interval={0}
+                                                            />
+                                                            <YAxis />
+                                                            <Tooltip content={<CustomTooltip />} />
+                                                            <Bar dataKey="value" fill="#2ecc71">
+                                                                {Object.entries(
+                                                                    lemmaSearchData.reduce((acc, occ) => {
+                                                                        acc[occ.author] = (acc[occ.author] || 0) + 1;
+                                                                        return acc;
+                                                                    }, {} as Record<string, number>)
+                                                                ).slice(0, 10).map((_, index) => (
+                                                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                                ))}
+                                                            </Bar>
+                                                        </BarChart>
+                                                    </ResponsiveContainer>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    </div>
+
+                                    {/* Table */}
                                     <Table>
                                         <TableHeader>
                                             <TableRow>
                                                 <TableHead>Sentence</TableHead>
                                                 <TableHead>Author</TableHead>
-                                                <TableHead>Title</TableHead>
+                                                <TableHead>Work</TableHead>
                                                 <TableHead>Century</TableHead>
-                                                <TableHead>Period</TableHead>
+                                                <TableHead>Language Period</TableHead>
                                                 <TableHead>Form</TableHead>
+                                                <TableHead>Translation</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -1051,6 +1180,26 @@ const PreverbDashboard = () => {
                                                     <TableCell>{occurrence.century}</TableCell>
                                                     <TableCell>{occurrence.language_period}</TableCell>
                                                     <TableCell>{occurrence.morphology}</TableCell>
+                                                    <TableCell>
+                                                        {(occurrence as SearchOccurrence).passage ? (
+                                                            <a
+                                                                href={(occurrence as SearchOccurrence).passage}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="text-primary hover:text-primary/80 hover:underline flex items-center gap-1"
+                                                                aria-label="View translation on Perseus"
+                                                            >
+                                                                Perseus
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                                    <path d="M15 3h6v6"></path>
+                                                                    <path d="M10 14L21 3"></path>
+                                                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                                                </svg>
+                                                            </a>
+                                                        ) : (
+                                                            'N/A'
+                                                        )}
+                                                    </TableCell>
                                                 </TableRow>
                                             ))}
                                         </TableBody>
@@ -1068,7 +1217,7 @@ const PreverbDashboard = () => {
 
             {showPreverbMeaningSearch && selectedPreverbMeaning && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-background border border-border rounded-lg shadow-lg max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+                    <div className="bg-background border border-border rounded-lg shadow-lg max-w-6xl w-full mx-4 max-h-[80vh] overflow-y-auto">
                         <div className="p-6">
                             <div className="flex justify-between items-center mb-4">
                                 <h2 className="text-xl font-bold">
@@ -1081,22 +1230,112 @@ const PreverbDashboard = () => {
                                     ✕ Close
                                 </button>
                             </div>
+
                             {preverbMeaningSearchLoading ? (
-                                <LoadingSpinner />
-                            ) : preverbMeaningSearchError ? (
-                                <div className="text-red-500">{preverbMeaningSearchError.message}</div>
+                                <div className="text-center py-8">
+                                    <LoadingSpinner />
+                                </div>
                             ) : preverbMeaningSearchData && preverbMeaningSearchData.length > 0 ? (
-                                <div className="overflow-auto max-h-[60vh]">
+                                <div>
+                                    {/* Visualizations */}
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                                        {/* Language Period Distribution */}
+                                        <Card>
+                                            <CardHeader className="pb-2">
+                                                <CardTitle className="text-lg">Distribution by Language Period</CardTitle>
+                                            </CardHeader>
+                                            <CardContent>
+                                                <div className="h-[200px]">
+                                                    <ResponsiveContainer width="100%" height="100%">
+                                                        <BarChart
+                                                            data={Object.entries(
+                                                                preverbMeaningSearchData.reduce((acc, occ) => {
+                                                                    acc[occ.language_period] = (acc[occ.language_period] || 0) + 1;
+                                                                    return acc;
+                                                                }, {} as Record<string, number>)
+                                                            ).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value)}
+                                                            margin={{ top: 5, right: 30, left: 20, bottom: 60 }}
+                                                        >
+                                                            <XAxis
+                                                                dataKey="name"
+                                                                angle={-45}
+                                                                textAnchor="end"
+                                                                height={60}
+                                                                interval={0}
+                                                            />
+                                                            <YAxis />
+                                                            <Tooltip content={<CustomTooltip />} />
+                                                            <Bar dataKey="value" fill="#3498db">
+                                                                {Object.entries(
+                                                                    preverbMeaningSearchData.reduce((acc, occ) => {
+                                                                        acc[occ.language_period] = (acc[occ.language_period] || 0) + 1;
+                                                                        return acc;
+                                                                    }, {} as Record<string, number>)
+                                                                ).map((_, index) => (
+                                                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                                ))}
+                                                            </Bar>
+                                                        </BarChart>
+                                                    </ResponsiveContainer>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+
+                                        {/* Author Distribution */}
+                                        <Card>
+                                            <CardHeader className="pb-2">
+                                                <CardTitle className="text-lg">Distribution by Author</CardTitle>
+                                            </CardHeader>
+                                            <CardContent>
+                                                <div className="h-[200px]">
+                                                    <ResponsiveContainer width="100%" height="100%">
+                                                        <BarChart
+                                                            data={Object.entries(
+                                                                preverbMeaningSearchData.reduce((acc, occ) => {
+                                                                    acc[occ.author] = (acc[occ.author] || 0) + 1;
+                                                                    return acc;
+                                                                }, {} as Record<string, number>)
+                                                            ).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 10)}
+                                                            margin={{ top: 5, right: 30, left: 20, bottom: 60 }}
+                                                        >
+                                                            <XAxis
+                                                                dataKey="name"
+                                                                angle={-45}
+                                                                textAnchor="end"
+                                                                height={60}
+                                                                interval={0}
+                                                            />
+                                                            <YAxis />
+                                                            <Tooltip content={<CustomTooltip />} />
+                                                            <Bar dataKey="value" fill="#2ecc71">
+                                                                {Object.entries(
+                                                                    preverbMeaningSearchData.reduce((acc, occ) => {
+                                                                        acc[occ.author] = (acc[occ.author] || 0) + 1;
+                                                                        return acc;
+                                                                    }, {} as Record<string, number>)
+                                                                ).slice(0, 10).map((_, index) => (
+                                                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                                ))}
+                                                            </Bar>
+                                                        </BarChart>
+                                                    </ResponsiveContainer>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    </div>
+
+                                    {/* Table */}
                                     <Table>
                                         <TableHeader>
                                             <TableRow>
                                                 <TableHead>Lemma</TableHead>
                                                 <TableHead>Sentence</TableHead>
                                                 <TableHead>Author</TableHead>
-                                                <TableHead>Title</TableHead>
+                                                <TableHead>Work</TableHead>
                                                 <TableHead>Century</TableHead>
-                                                <TableHead>Period</TableHead>
+                                                <TableHead>Language Period</TableHead>
                                                 <TableHead>Form</TableHead>
+                                                <TableHead>Translation</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -1109,6 +1348,26 @@ const PreverbDashboard = () => {
                                                     <TableCell>{occurrence.century}</TableCell>
                                                     <TableCell>{occurrence.language_period}</TableCell>
                                                     <TableCell>{occurrence.morphology}</TableCell>
+                                                    <TableCell>
+                                                        {(occurrence as SearchOccurrence & { passage?: string }).passage ? (
+                                                            <a
+                                                                href={(occurrence as SearchOccurrence & { passage?: string }).passage}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="text-primary hover:text-primary/80 hover:underline flex items-center gap-1"
+                                                                aria-label="View translation on Perseus"
+                                                            >
+                                                                Perseus
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                                    <path d="M15 3h6v6"></path>
+                                                                    <path d="M10 14L21 3"></path>
+                                                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2h6"></path>
+                                                                </svg>
+                                                            </a>
+                                                        ) : (
+                                                            'N/A'
+                                                        )}
+                                                    </TableCell>
                                                 </TableRow>
                                             ))}
                                         </TableBody>
@@ -1126,11 +1385,11 @@ const PreverbDashboard = () => {
 
             {showVerbClassSearch && selectedVerbClass && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-background border border-border rounded-lg shadow-lg max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+                    <div className="bg-background border border-border rounded-lg shadow-lg max-w-6xl w-full mx-4 max-h-[80vh] overflow-y-auto">
                         <div className="p-6">
                             <div className="flex justify-between items-center mb-4">
                                 <h2 className="text-xl font-bold">
-                                    Verb Class: {selectedVerbClass} with {selectedPreverb}
+                                    Verb Class: &quot;{selectedVerbClass}&quot; with {selectedPreverb}
                                 </h2>
                                 <button
                                     onClick={closeSearchModals}
@@ -1139,22 +1398,112 @@ const PreverbDashboard = () => {
                                     ✕ Close
                                 </button>
                             </div>
+
                             {verbClassSearchLoading ? (
-                                <LoadingSpinner />
-                            ) : verbClassSearchError ? (
-                                <div className="text-red-500">{verbClassSearchError.message}</div>
+                                <div className="text-center py-8">
+                                    <LoadingSpinner />
+                                </div>
                             ) : verbClassSearchData && verbClassSearchData.length > 0 ? (
-                                <div className="overflow-auto max-h-[60vh]">
+                                <div>
+                                    {/* Visualizations */}
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                                        {/* Language Period Distribution */}
+                                        <Card>
+                                            <CardHeader className="pb-2">
+                                                <CardTitle className="text-lg">Distribution by Language Period</CardTitle>
+                                            </CardHeader>
+                                            <CardContent>
+                                                <div className="h-[200px]">
+                                                    <ResponsiveContainer width="100%" height="100%">
+                                                        <BarChart
+                                                            data={Object.entries(
+                                                                verbClassSearchData.reduce((acc, occ) => {
+                                                                    acc[occ.language_period] = (acc[occ.language_period] || 0) + 1;
+                                                                    return acc;
+                                                                }, {} as Record<string, number>)
+                                                            ).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value)}
+                                                            margin={{ top: 5, right: 30, left: 20, bottom: 60 }}
+                                                        >
+                                                            <XAxis
+                                                                dataKey="name"
+                                                                angle={-45}
+                                                                textAnchor="end"
+                                                                height={60}
+                                                                interval={0}
+                                                            />
+                                                            <YAxis />
+                                                            <Tooltip content={<CustomTooltip />} />
+                                                            <Bar dataKey="value" fill="#3498db">
+                                                                {Object.entries(
+                                                                    verbClassSearchData.reduce((acc, occ) => {
+                                                                        acc[occ.language_period] = (acc[occ.language_period] || 0) + 1;
+                                                                        return acc;
+                                                                    }, {} as Record<string, number>)
+                                                                ).map((_, index) => (
+                                                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                                ))}
+                                                            </Bar>
+                                                        </BarChart>
+                                                    </ResponsiveContainer>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+
+                                        {/* Author Distribution */}
+                                        <Card>
+                                            <CardHeader className="pb-2">
+                                                <CardTitle className="text-lg">Distribution by Author</CardTitle>
+                                            </CardHeader>
+                                            <CardContent>
+                                                <div className="h-[200px]">
+                                                    <ResponsiveContainer width="100%" height="100%">
+                                                        <BarChart
+                                                            data={Object.entries(
+                                                                verbClassSearchData.reduce((acc, occ) => {
+                                                                    acc[occ.author] = (acc[occ.author] || 0) + 1;
+                                                                    return acc;
+                                                                }, {} as Record<string, number>)
+                                                            ).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 10)}
+                                                            margin={{ top: 5, right: 30, left: 20, bottom: 60 }}
+                                                        >
+                                                            <XAxis
+                                                                dataKey="name"
+                                                                angle={-45}
+                                                                textAnchor="end"
+                                                                height={60}
+                                                                interval={0}
+                                                            />
+                                                            <YAxis />
+                                                            <Tooltip content={<CustomTooltip />} />
+                                                            <Bar dataKey="value" fill="#2ecc71">
+                                                                {Object.entries(
+                                                                    verbClassSearchData.reduce((acc, occ) => {
+                                                                        acc[occ.author] = (acc[occ.author] || 0) + 1;
+                                                                        return acc;
+                                                                    }, {} as Record<string, number>)
+                                                                ).slice(0, 10).map((_, index) => (
+                                                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                                ))}
+                                                            </Bar>
+                                                        </BarChart>
+                                                    </ResponsiveContainer>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    </div>
+
+                                    {/* Table */}
                                     <Table>
                                         <TableHeader>
                                             <TableRow>
                                                 <TableHead>Lemma</TableHead>
                                                 <TableHead>Sentence</TableHead>
                                                 <TableHead>Author</TableHead>
-                                                <TableHead>Title</TableHead>
+                                                <TableHead>Work</TableHead>
                                                 <TableHead>Century</TableHead>
-                                                <TableHead>Period</TableHead>
+                                                <TableHead>Language Period</TableHead>
                                                 <TableHead>Form</TableHead>
+                                                <TableHead>Translation</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -1167,6 +1516,26 @@ const PreverbDashboard = () => {
                                                     <TableCell>{occurrence.century}</TableCell>
                                                     <TableCell>{occurrence.language_period}</TableCell>
                                                     <TableCell>{occurrence.morphology}</TableCell>
+                                                    <TableCell>
+                                                        {(occurrence as SearchOccurrence & { passage?: string }).passage ? (
+                                                            <a
+                                                                href={(occurrence as SearchOccurrence & { passage?: string }).passage}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="text-primary hover:text-primary/80 hover:underline flex items-center gap-1"
+                                                                aria-label="View translation on Perseus"
+                                                            >
+                                                                Perseus
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                                    <path d="M15 3h6v6"></path>
+                                                                    <path d="M10 14L21 3"></path>
+                                                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2h6"></path>
+                                                                </svg>
+                                                            </a>
+                                                        ) : (
+                                                            'N/A'
+                                                        )}
+                                                    </TableCell>
                                                 </TableRow>
                                             ))}
                                         </TableBody>

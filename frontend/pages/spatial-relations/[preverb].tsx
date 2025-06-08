@@ -495,6 +495,7 @@ const SpatialRelationsPage = () => {
                                                 <TableHead>Century</TableHead>
                                                 <TableHead>Period</TableHead>
                                                 <TableHead>Form</TableHead>
+                                                <TableHead>Translation</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -507,6 +508,26 @@ const SpatialRelationsPage = () => {
                                                     <TableCell>{occurrence.century || 'N/A'}</TableCell>
                                                     <TableCell>{occurrence.language_period || 'N/A'}</TableCell>
                                                     <TableCell>{occurrence.morphology || 'N/A'}</TableCell>
+                                                    <TableCell>
+                                                        {(occurrence as SpatialOccurrence & { passage?: string }).passage ? (
+                                                            <a
+                                                                href={(occurrence as SpatialOccurrence & { passage?: string }).passage}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="text-primary hover:text-primary/80 hover:underline flex items-center gap-1"
+                                                                aria-label="View translation on Perseus"
+                                                            >
+                                                                Perseus
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                                    <path d="M15 3h6v6"></path>
+                                                                    <path d="M10 14L21 3"></path>
+                                                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2h6"></path>
+                                                                </svg>
+                                                            </a>
+                                                        ) : (
+                                                            'N/A'
+                                                        )}
+                                                    </TableCell>
                                                 </TableRow>
                                             ))}
                                         </TableBody>

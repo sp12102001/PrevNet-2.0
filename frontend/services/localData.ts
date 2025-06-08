@@ -24,6 +24,7 @@ interface LocalDataRecord {
     morphology: string;
     spatial_relation_role: string;
     spatial_relation_expression: string;
+    passage?: string;
 }
 
 // Extend the PreverbData interface to include preverb meanings
@@ -53,6 +54,7 @@ interface LocalPreverbData extends PreverbData {
         preverb_semantics: string;
         spatial_relation_role: string;
         spatial_relation_expression: string;
+        passage?: string;
     }>;
 }
 
@@ -419,7 +421,8 @@ export const useLocalPreverbData = (preverb: string | null) => {
                         verb_class: record.verb_class || 'Unknown',
                         preverb_semantics: record.preverb_semantics || 'Unknown',
                         spatial_relation_role: record.spatial_relation_role || 'NA',
-                        spatial_relation_expression: record.spatial_relation_expression || 'NA'
+                        spatial_relation_expression: record.spatial_relation_expression || 'NA',
+                        passage: record.passage
                     };
                 });
 
