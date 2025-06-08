@@ -871,6 +871,12 @@ const PreverbDashboard = () => {
                                                     >
                                                         Spatial Relations
                                                     </Link>
+                                                    <Link
+                                                        href={`/motion-participants/${encodeURIComponent(selectedPreverb || '')}`}
+                                                        className="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
+                                                    >
+                                                        Motion Participants
+                                                    </Link>
                                                 </div>
                                                 <div className="text-sm text-muted-foreground">
                                                     Showing {currentExamples.length} of {totalExamples} entries

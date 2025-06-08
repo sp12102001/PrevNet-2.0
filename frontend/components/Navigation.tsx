@@ -19,12 +19,15 @@ const Navigation = () => {
         { title: 'Home', path: '/', keywords: ['home', 'main', 'start'] },
         { title: 'Latin Search', path: '/search/latin', keywords: ['latin', 'search', 'preverb', 'preverbs'] },
         { title: 'Greek Search', path: '/search/greek', keywords: ['greek', 'search', 'ancient greek'] },
+        { title: 'Motion Participants Search', path: '/motion-participants/search/', keywords: ['motion', 'participants', 'search', 'figure', 'ground', 'lemma'] },
         { title: 'Output', path: '/output', keywords: ['output', 'results', 'data'] },
+        { title: 'References', path: '/references', keywords: ['references', 'bibliography', 'citations'] },
         { title: 'About - Project', path: '/about/project', keywords: ['about', 'project', 'info'] },
         { title: 'About - Corpus', path: '/about/corpus', keywords: ['about', 'corpus', 'text'] },
         { title: 'About - Preverbs', path: '/about/preverbs', keywords: ['about', 'preverbs', 'prefixes'] },
         { title: 'About - Verbs', path: '/about/verbs', keywords: ['about', 'verbs', 'words'] },
         { title: 'About - Annotation', path: '/about/annotation', keywords: ['about', 'annotation', 'tagging'] },
+        { title: 'About - How to use', path: '/about/how-to-use', keywords: ['about', 'how to use', 'help', 'guide'] },
         { title: 'About - Acknowledgments', path: '/about/acknowledgments', keywords: ['about', 'acknowledgments', 'thanks', 'credits'] },
     ];
 
@@ -147,6 +150,10 @@ const Navigation = () => {
                                         className="block px-4 py-2.5 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-sm transition-colors hover:text-blue-500">
                                         Project
                                     </Link>
+                                    <Link href="/about/how-to-use"
+                                        className="block px-4 py-2.5 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-sm transition-colors hover:text-blue-500">
+                                        How to use
+                                    </Link>
                                     <Link href="/about/acknowledgments"
                                         className="block px-4 py-2.5 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-sm transition-colors hover:text-blue-500">
                                         Acknowledgments
@@ -190,6 +197,16 @@ const Navigation = () => {
                         }`}
                     >
                         Output
+                    </Link>
+                    <Link
+                        href="/references"
+                        className={`relative font-medium transition-colors hover:text-blue-500 ${
+                            router.pathname === '/references'
+                                ? 'text-blue-500 after:absolute after:bottom-[-6px] after:left-0 after:w-full after:h-[2px] after:bg-blue-500 after:rounded-full'
+                                : 'text-card-foreground'
+                        }`}
+                    >
+                        References
                     </Link>
                 </nav>
             </div>

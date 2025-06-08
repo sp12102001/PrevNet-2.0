@@ -24,6 +24,10 @@ interface LocalDataRecord {
     morphology: string;
     spatial_relation_role: string;
     spatial_relation_expression: string;
+    figure_semantics: string;
+    ground_semantics: string;
+    participant_lemma: string;
+    participant_role: string;
     passage?: string;
 }
 
@@ -54,6 +58,10 @@ interface LocalPreverbData extends PreverbData {
         preverb_semantics: string;
         spatial_relation_role: string;
         spatial_relation_expression: string;
+        figure_semantics: string;
+        ground_semantics: string;
+        participant_lemma: string;
+        participant_role: string;
         passage?: string;
     }>;
 }
@@ -422,6 +430,10 @@ export const useLocalPreverbData = (preverb: string | null) => {
                         preverb_semantics: record.preverb_semantics || 'Unknown',
                         spatial_relation_role: record.spatial_relation_role || 'NA',
                         spatial_relation_expression: record.spatial_relation_expression || 'NA',
+                        figure_semantics: record.figure_semantics || 'NA',
+                        ground_semantics: record.ground_semantics || 'NA',
+                        participant_lemma: record.participant_lemma || 'NA',
+                        participant_role: record.participant_role || 'NA',
                         passage: record.passage
                     };
                 });
@@ -832,6 +844,133 @@ export const useLocalVerbClassSearch = (preverb: string | null, verbClass: strin
 
         fetchData();
     }, [preverb, verbClass, language]);
+
+    return { data, loading, error, language };
+};
+
+/**
+ * Search for motion participant occurrences by lemma
+ */
+export const useLocalMotionParticipantSearch = (lemma: string | null) => {
+    const [data, setData] = useState<Array<{
+        id: string;
+        preverb: string;
+        sentence: string;
+        author: string;
+        title: string;
+        century: string;
+        language_period: string;
+        morphology: string;
+        verb_class: string;
+        preverb_semantics: string;
+        verb_semantics: string;
+        figure_semantics: string;
+        ground_semantics: string;
+        participant_role: string;
+        participant_lemma: string;
+        passage?: string;
+    }> | null>(null);
+    const [loading, setLoading] = useState<boolean>(false);
+    const [error, setError] = useState<Error | null>(null);
+    const [language, _setLanguage] = useState<Language>(currentLanguage);
+
+    useEffect(() => {
+        if (!lemma) {
+            setData(null);
+            return;
+        }
+
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                const records = await loadData(language);
+
+                // Filter for records that contain the lemma in participant_lemma field
+                const matchingRecords = records.filter(record => {
+                    if (!record.participant_lemma || record.participant_lemma === 'NA') return false;
+
+                    // Parse the participant_lemma array string to find matching lemma
+                    try {
+                        const lemmas = record.participant_lemma.replace(/^\[|\]$/g, '').replace(/'/g, '').split(/,\s*/);
+                        return lemmas.some(participantLemma =>
+                            participantLemma.trim().toLowerCase() === lemma.toLowerCase()
+                        );
+                    } catch {
+                        return false;
+                    }
+                });
+
+                if (matchingRecords.length === 0) {
+                    setData([]);
+                    setLoading(false);
+                    return;
+                }
+
+                // Clean semantics function
+                const cleanSemantics = (semantics: string): string => {
+                    if (!semantics || semantics === 'NA') return '';
+
+                    // Remove brackets and quotes
+                    const cleaned = semantics.replace(/^\[|\]$/g, '').replace(/'/g, '');
+
+                    // Handle multiple meanings separated by comma
+                    const meanings = cleaned.split(/,\s*(?=n#)/);
+
+                    // For each meaning, remove the alphanumeric ID (e.g., n#03247107)
+                    const processedMeanings = meanings.map(meaning => {
+                        return meaning.replace(/^n#\d+\s*/, '').trim();
+                    });
+
+                    // For human beings and gods, keep the less specific label
+                    if (processedMeanings.length > 1) {
+                        const generalTerms = processedMeanings.filter(m =>
+                            m.includes('a human being') ||
+                            m.includes('any supernatural being worshipped as controlling some part of the world')
+                        );
+
+                        if (generalTerms.length > 0) {
+                            return generalTerms[generalTerms.length - 1];
+                        }
+                    }
+
+                    return processedMeanings[0] || '';
+                };
+
+                // Create occurrences for display
+                const occurrences = matchingRecords.map((record, index) => ({
+                    id: `motion_participant_${lemma}_${index}`,
+                    preverb: record.preverb,
+                    sentence: record.sentence,
+                    author: record.author,
+                    title: record.title,
+                    century: record.century,
+                    language_period: record.language_period || 'Unknown',
+                    morphology: record.morphology || 'Unknown',
+                    verb_class: record.verb_class || 'Unknown',
+                    preverb_semantics: record.preverb_semantics || 'Unknown',
+                    verb_semantics: record.verb_semantics
+                        .replace(/^\[|\]$/g, '')
+                        .replace(/v#\d+\s*/g, '')
+                        .replace(/'/g, '')
+                        .trim(),
+                    figure_semantics: cleanSemantics(record.figure_semantics || ''),
+                    ground_semantics: cleanSemantics(record.ground_semantics || ''),
+                    participant_role: record.participant_role || 'Unknown',
+                    participant_lemma: record.participant_lemma || 'Unknown',
+                    passage: record.passage
+                }));
+
+                setData(occurrences);
+                setLoading(false);
+            } catch (error) {
+                console.error(`Error fetching motion participant search data:`, error);
+                setError(error instanceof Error ? error : new Error('Failed to fetch motion participant search data'));
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, [lemma, language]);
 
     return { data, loading, error, language };
 };
