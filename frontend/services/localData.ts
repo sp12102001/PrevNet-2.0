@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { PreverbData, MeaningData } from './api';
+import { cleanVerbSemantics } from './utils';
 
 // Types for our local data
 interface LocalDataRecord {
@@ -253,11 +254,7 @@ export const useLocalPreverbData = (preverb: string | null) => {
                 // Count meanings
                 const meanings: { [key: string]: number } = {};
                 filteredRecords.forEach(record => {
-                    const meaning = record.verb_semantics
-                        .replace(/^\[|\]$/g, '')
-                        .replace(/v#\d+\s*/g, '')
-                        .replace(/'/g, '')
-                        .trim();
+                    const meaning = cleanVerbSemantics(record.verb_semantics);
                     meanings[meaning] = (meanings[meaning] || 0) + 1;
                 });
 
@@ -385,11 +382,7 @@ export const useLocalPreverbData = (preverb: string | null) => {
                     if (!lemmaToMeanings.has(key)) {
                         lemmaToMeanings.set(key, {
                             count: 1,
-                            verb_semantics: record.verb_semantics
-                                .replace(/^\[|\]$/g, '')
-                                .replace(/v#\d+\s*/g, '')
-                                .replace(/'/g, '')
-                                .trim()
+                            verb_semantics: cleanVerbSemantics(record.verb_semantics)
                         });
                     } else {
                         const existing = lemmaToMeanings.get(key)!;
@@ -410,16 +403,12 @@ export const useLocalPreverbData = (preverb: string | null) => {
 
                 // Create all examples array with complete metadata
                 const allExamples = filteredRecords.map((record, index) => {
-                    const cleanVerbSemantics = record.verb_semantics
-                        .replace(/^\[|\]$/g, '')
-                        .replace(/v#\d+\s*/g, '')
-                        .replace(/'/g, '')
-                        .trim();
+                    const cleanedVerbSemantics = cleanVerbSemantics(record.verb_semantics);
 
                     return {
                         lemma: record.lemma,
-                        verb_semantics: cleanVerbSemantics,
-                        meaning_id: `${preverb}_${record.lemma}_${cleanVerbSemantics.replace(/\s+/g, '_')}_${language}_${index}`,
+                        verb_semantics: cleanedVerbSemantics,
+                        meaning_id: `${preverb}_${record.lemma}_${cleanedVerbSemantics.replace(/\s+/g, '_')}_${language}_${index}`,
                         sentence: record.sentence,
                         author: record.author,
                         title: record.title,
@@ -550,12 +539,7 @@ export const useLocalMeaningData = (meaningId: string | null) => {
                 if (verbSemantics) {
                     const cleanedVerbSemantics = verbSemantics.replace(/_/g, ' ');
                     const moreSpecificRecords = matchingRecords.filter(record => {
-                        const recordVerbSemantics = record.verb_semantics
-                            .replace(/^\[|\]$/g, '')
-                            .replace(/v#\d+\s*/g, '')
-                            .replace(/'/g, '')
-                            .trim();
-
+                        const recordVerbSemantics = cleanVerbSemantics(record.verb_semantics);
                         return recordVerbSemantics.toLowerCase() === cleanedVerbSemantics.toLowerCase();
                     });
 
@@ -570,11 +554,7 @@ export const useLocalMeaningData = (meaningId: string | null) => {
                 }
 
                 // Extract a representative verb semantics (using the first one)
-                const verbSemanticsDisplay = matchingRecords[0].verb_semantics
-                    .replace(/^\[|\]$/g, '')
-                    .replace(/v#\d+\s*/g, '')
-                    .replace(/'/g, '')
-                    .trim();
+                const verbSemanticsDisplay = cleanVerbSemantics(matchingRecords[0].verb_semantics);
 
                 // Create occurrences for display
                 const occurrences = matchingRecords.map(record => ({
@@ -662,11 +642,7 @@ export const useLocalLemmaSearch = (preverb: string | null, lemma: string | null
                     morphology: record.morphology || 'Unknown',
                     verb_class: record.verb_class || 'Unknown',
                     preverb_semantics: record.preverb_semantics || 'Unknown',
-                    verb_semantics: record.verb_semantics
-                        .replace(/^\[|\]$/g, '')
-                        .replace(/v#\d+\s*/g, '')
-                        .replace(/'/g, '')
-                        .trim()
+                    verb_semantics: cleanVerbSemantics(record.verb_semantics)
                 }));
 
                 setData(occurrences);
@@ -747,11 +723,7 @@ export const useLocalPreverbMeaningSearch = (preverb: string | null, meaning: st
                     morphology: record.morphology || 'Unknown',
                     verb_class: record.verb_class || 'Unknown',
                     preverb_semantics: record.preverb_semantics || 'Unknown',
-                    verb_semantics: record.verb_semantics
-                        .replace(/^\[|\]$/g, '')
-                        .replace(/v#\d+\s*/g, '')
-                        .replace(/'/g, '')
-                        .trim()
+                    verb_semantics: cleanVerbSemantics(record.verb_semantics)
                 }));
 
                 setData(occurrences);
@@ -826,11 +798,7 @@ export const useLocalVerbClassSearch = (preverb: string | null, verbClass: strin
                     morphology: record.morphology || 'Unknown',
                     verb_class: record.verb_class || 'Unknown',
                     preverb_semantics: record.preverb_semantics || 'Unknown',
-                    verb_semantics: record.verb_semantics
-                        .replace(/^\[|\]$/g, '')
-                        .replace(/v#\d+\s*/g, '')
-                        .replace(/'/g, '')
-                        .trim()
+                    verb_semantics: cleanVerbSemantics(record.verb_semantics)
                 }));
 
                 setData(occurrences);
@@ -906,36 +874,6 @@ export const useLocalMotionParticipantSearch = (lemma: string | null) => {
                     return;
                 }
 
-                // Clean semantics function
-                const cleanSemantics = (semantics: string): string => {
-                    if (!semantics || semantics === 'NA') return '';
-
-                    // Remove brackets and quotes
-                    const cleaned = semantics.replace(/^\[|\]$/g, '').replace(/'/g, '');
-
-                    // Handle multiple meanings separated by comma
-                    const meanings = cleaned.split(/,\s*(?=n#)/);
-
-                    // For each meaning, remove the alphanumeric ID (e.g., n#03247107)
-                    const processedMeanings = meanings.map(meaning => {
-                        return meaning.replace(/^n#\d+\s*/, '').trim();
-                    });
-
-                    // For human beings and gods, keep the less specific label
-                    if (processedMeanings.length > 1) {
-                        const generalTerms = processedMeanings.filter(m =>
-                            m.includes('a human being') ||
-                            m.includes('any supernatural being worshipped as controlling some part of the world')
-                        );
-
-                        if (generalTerms.length > 0) {
-                            return generalTerms[generalTerms.length - 1];
-                        }
-                    }
-
-                    return processedMeanings[0] || '';
-                };
-
                 // Create occurrences for display
                 const occurrences = matchingRecords.map((record, index) => ({
                     id: `motion_participant_${lemma}_${index}`,
@@ -948,13 +886,9 @@ export const useLocalMotionParticipantSearch = (lemma: string | null) => {
                     morphology: record.morphology || 'Unknown',
                     verb_class: record.verb_class || 'Unknown',
                     preverb_semantics: record.preverb_semantics || 'Unknown',
-                    verb_semantics: record.verb_semantics
-                        .replace(/^\[|\]$/g, '')
-                        .replace(/v#\d+\s*/g, '')
-                        .replace(/'/g, '')
-                        .trim(),
-                    figure_semantics: cleanSemantics(record.figure_semantics || ''),
-                    ground_semantics: cleanSemantics(record.ground_semantics || ''),
+                    verb_semantics: cleanVerbSemantics(record.verb_semantics),
+                    figure_semantics: record.figure_semantics || '',
+                    ground_semantics: record.ground_semantics || '',
                     participant_role: record.participant_role || 'Unknown',
                     participant_lemma: record.participant_lemma || 'Unknown',
                     passage: record.passage

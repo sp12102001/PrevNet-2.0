@@ -18,6 +18,14 @@ import {
 import { useLocalPreverbData } from '@/services/localData';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { formatCentury } from '@/utils/formatters';
+import { getParticipantSemantics, getCloudSemantics } from '@/services/utils';
+import WordCloud from 'react-wordcloud';
+
+// Interface for word cloud words
+interface Word {
+    text: string;
+    value: number;
+}
 
 // Interface for motion participant data
 interface MotionParticipantOccurrence {
@@ -63,37 +71,6 @@ const MotionParticipantsPage = () => {
         language_period: ''
     });
 
-    // Function to clean semantic annotations
-    const cleanSemantics = (semantics: string): string => {
-        if (!semantics || semantics === 'NA') return '';
-
-        // Remove brackets and quotes
-        const cleaned = semantics.replace(/^\[|\]$/g, '').replace(/'/g, '');
-
-        // Handle multiple meanings separated by comma
-        const meanings = cleaned.split(/,\s*(?=n#)/);
-
-        // For each meaning, remove the alphanumeric ID (e.g., n#03247107)
-        const processedMeanings = meanings.map(meaning => {
-            return meaning.replace(/^n#\d+\s*/, '').trim();
-        });
-
-        // For human beings and gods, keep the less specific label
-        if (processedMeanings.length > 1) {
-            // Check if one is more general (human being or supernatural being)
-            const generalTerms = processedMeanings.filter(m =>
-                m.includes('a human being') ||
-                m.includes('any supernatural being worshipped as controlling some part of the world')
-            );
-
-            if (generalTerms.length > 0) {
-                return generalTerms[generalTerms.length - 1]; // Return the more general one
-            }
-        }
-
-        return processedMeanings[0] || '';
-    };
-
     // Function to process participant data
     // eslint-disable-next-line react-hooks/exhaustive-deps
     const processParticipantData = () => {
@@ -116,27 +93,33 @@ const MotionParticipantsPage = () => {
                 const lemmas = example.participant_lemma.replace(/^\[|\]$/g, '').replace(/'/g, '').split(/,\s*/);
 
                 // Get figure and ground semantics
-                const figureSemantics = cleanSemantics(example.figure_semantics || '');
-                const groundSemantics = cleanSemantics(example.ground_semantics || '');
+                const figureSemanticsArray = getParticipantSemantics(example.figure_semantics || '');
+                const groundSemanticsArray = getParticipantSemantics(example.ground_semantics || '');
+
+                const figureSemanticsForCloud = getCloudSemantics(figureSemanticsArray);
+                const groundSemanticsForCloud = getCloudSemantics(groundSemanticsArray);
+
+                const figureSemanticsForTable = figureSemanticsArray.join(' / ');
+                const groundSemanticsForTable = groundSemanticsArray.join(' / ');
 
                 // Process each role-lemma pair
                 for (let i = 0; i < Math.min(roles.length, lemmas.length); i++) {
                     const role = roles[i].trim();
                     const lemma = lemmas[i].trim();
 
-                    if (role === 'Figure' && figureSemantics) {
-                        const key = `${lemma}:${figureSemantics}`;
+                    if (role === 'Figure' && figureSemanticsForCloud) {
+                        const key = `${lemma}:${figureSemanticsForCloud}`;
                         if (figureMap.has(key)) {
                             figureMap.get(key)!.count++;
                         } else {
-                            figureMap.set(key, { meaning: figureSemantics, count: 1 });
+                            figureMap.set(key, { meaning: figureSemanticsForCloud, count: 1 });
                         }
-                    } else if (role === 'Ground' && groundSemantics) {
-                        const key = `${lemma}:${groundSemantics}`;
+                    } else if (role === 'Ground' && groundSemanticsForCloud) {
+                        const key = `${lemma}:${groundSemanticsForCloud}`;
                         if (groundMap.has(key)) {
                             groundMap.get(key)!.count++;
                         } else {
-                            groundMap.set(key, { meaning: groundSemantics, count: 1 });
+                            groundMap.set(key, { meaning: groundSemanticsForCloud, count: 1 });
                         }
                     }
                 }
@@ -152,8 +135,8 @@ const MotionParticipantsPage = () => {
                     morphology: example.morphology || '',
                     preverb_semantics: example.preverb_semantics || '',
                     verb_semantics: example.verb_semantics || '',
-                    figure_semantics: figureSemantics,
-                    ground_semantics: groundSemantics,
+                    figure_semantics: figureSemanticsForTable,
+                    ground_semantics: groundSemanticsForTable,
                     participant_lemma: example.participant_lemma || '',
                     participant_role: example.participant_role || '',
                     passage: example.passage
@@ -228,6 +211,8 @@ const MotionParticipantsPage = () => {
     if (!preverbData) return <div>No data available</div>;
 
     const modalOccurrences = selectedMeaning ? applyFilters(filteredOccurrences) : [];
+    const figureWordCloudData = generateWordCloudData(figureData);
+    const groundWordCloudData = generateWordCloudData(groundData);
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8">
@@ -248,28 +233,26 @@ const MotionParticipantsPage = () => {
                     <CardDescription>Entities performing the motion</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    {figureData.length > 0 ? (
-                        <div className="space-y-4">
-                            <div className="text-center p-8 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                                <div className="flex flex-wrap gap-2 justify-center">
-                                    {generateWordCloudData(figureData).map((item, index) => {
-                                        const fontSize = Math.max(12, Math.min(24, 12 + item.value * 2));
-                                        return (
-                                            <span
-                                                key={index}
-                                                className="inline-block px-2 py-1 bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-200 rounded cursor-pointer hover:bg-green-200 dark:hover:bg-green-700 transition-colors"
-                                                style={{ fontSize: `${fontSize}px` }}
-                                                onClick={() => handleMeaningClick(item.text)}
-                                            >
-                                                {item.text} ({item.value})
-                                            </span>
-                                        );
-                                    })}
-                                </div>
-                            </div>
+                    {figureWordCloudData.length > 0 ? (
+                        <div style={{ width: '100%', height: '300px' }}>
+                            <WordCloud
+                                data={figureWordCloudData}
+                                options={{
+                                    rotations: 2,
+                                    rotationAngles: [-90, 0],
+                                    fontSizes: [20, 60],
+                                    padding: 1,
+                                }}
+                                callbacks={{
+                                    onWordClick: (word: Word) => handleMeaningClick(word.text),
+                                    getWordTooltip: (word: Word) => `${word.text} (${word.value} occurrences)`,
+                                }}
+                            />
                         </div>
                     ) : (
-                        <p className="text-center text-muted-foreground py-8">No Figure data available</p>
+                        <div className="text-center py-8 text-muted-foreground">
+                            No significant figure data to display
+                        </div>
                     )}
                 </CardContent>
             </Card>
@@ -278,31 +261,29 @@ const MotionParticipantsPage = () => {
             <Card>
                 <CardHeader>
                     <CardTitle>Ground Semantics</CardTitle>
-                    <CardDescription>Background locations where motion is performed</CardDescription>
+                    <CardDescription>Background locations for the motion</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    {groundData.length > 0 ? (
-                        <div className="space-y-4">
-                            <div className="text-center p-8 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                                <div className="flex flex-wrap gap-2 justify-center">
-                                    {generateWordCloudData(groundData).map((item, index) => {
-                                        const fontSize = Math.max(12, Math.min(24, 12 + item.value * 2));
-                                        return (
-                                            <span
-                                                key={index}
-                                                className="inline-block px-2 py-1 bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 rounded cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-700 transition-colors"
-                                                style={{ fontSize: `${fontSize}px` }}
-                                                onClick={() => handleMeaningClick(item.text)}
-                                            >
-                                                {item.text} ({item.value})
-                                            </span>
-                                        );
-                                    })}
-                                </div>
-                            </div>
+                    {groundWordCloudData.length > 0 ? (
+                        <div style={{ width: '100%', height: '300px' }}>
+                            <WordCloud
+                                data={groundWordCloudData}
+                                options={{
+                                    rotations: 2,
+                                    rotationAngles: [-90, 0],
+                                    fontSizes: [20, 60],
+                                    padding: 1,
+                                }}
+                                callbacks={{
+                                    onWordClick: (word: Word) => handleMeaningClick(word.text),
+                                    getWordTooltip: (word: Word) => `${word.text} (${word.value} occurrences)`,
+                                }}
+                            />
                         </div>
                     ) : (
-                        <p className="text-center text-muted-foreground py-8">No Ground data available</p>
+                        <div className="text-center py-8 text-muted-foreground">
+                            No significant ground data to display
+                        </div>
                     )}
                 </CardContent>
             </Card>

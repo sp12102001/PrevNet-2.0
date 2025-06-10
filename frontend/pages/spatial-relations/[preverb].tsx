@@ -526,7 +526,7 @@ const SpatialRelationsPage = () => {
                                                                 </svg>
                                                             </a>
                                                         ) : (
-                                                            'N/A'
+                                                            'Link not available'
                                                         )}
                                                     </TableCell>
                                                 </TableRow>
