@@ -602,6 +602,7 @@ export const useLocalLemmaSearch = (preverb: string | null, lemma: string | null
         verb_class: string;
         preverb_semantics: string;
         verb_semantics: string;
+        passage?: string;
     }> | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<Error | null>(null);
@@ -618,7 +619,6 @@ export const useLocalLemmaSearch = (preverb: string | null, lemma: string | null
                 setLoading(true);
                 const records = await loadData(language);
 
-                // Filter for the specific preverb and lemma
                 const matchingRecords = records.filter(
                     record =>
                         record.preverb.toLowerCase() === preverb.toLowerCase() &&
@@ -631,7 +631,6 @@ export const useLocalLemmaSearch = (preverb: string | null, lemma: string | null
                     return;
                 }
 
-                // Create occurrences for display
                 const occurrences = matchingRecords.map((record, index) => ({
                     id: `${preverb}_${lemma}_${index}`,
                     sentence: record.sentence,
@@ -642,7 +641,8 @@ export const useLocalLemmaSearch = (preverb: string | null, lemma: string | null
                     morphology: record.morphology || 'Unknown',
                     verb_class: record.verb_class || 'Unknown',
                     preverb_semantics: record.preverb_semantics || 'Unknown',
-                    verb_semantics: cleanVerbSemantics(record.verb_semantics)
+                    verb_semantics: cleanVerbSemantics(record.verb_semantics),
+                    passage: record.passage
                 }));
 
                 setData(occurrences);
@@ -676,6 +676,7 @@ export const useLocalPreverbMeaningSearch = (preverb: string | null, meaning: st
         verb_class: string;
         preverb_semantics: string;
         verb_semantics: string;
+        passage?: string;
     }> | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<Error | null>(null);
@@ -692,12 +693,10 @@ export const useLocalPreverbMeaningSearch = (preverb: string | null, meaning: st
                 setLoading(true);
                 const records = await loadData(language);
 
-                // Filter for the specific preverb and preverb meaning
                 const matchingRecords = records.filter(record => {
                     if (record.preverb.toLowerCase() !== preverb.toLowerCase()) return false;
                     if (!record.preverb_semantics) return false;
 
-                    // Check if the preverb semantics contains the specific meaning
                     const semantics = record.preverb_semantics.split(/,\s*/);
                     return semantics.some(semantic => {
                         const cleanSemantic = semantic.trim().replace(/ ?\(malefactive\)/g, '').trim();
@@ -711,7 +710,6 @@ export const useLocalPreverbMeaningSearch = (preverb: string | null, meaning: st
                     return;
                 }
 
-                // Create occurrences for display
                 const occurrences = matchingRecords.map((record, index) => ({
                     id: `${preverb}_${meaning}_${index}`,
                     lemma: record.lemma,
@@ -723,7 +721,8 @@ export const useLocalPreverbMeaningSearch = (preverb: string | null, meaning: st
                     morphology: record.morphology || 'Unknown',
                     verb_class: record.verb_class || 'Unknown',
                     preverb_semantics: record.preverb_semantics || 'Unknown',
-                    verb_semantics: cleanVerbSemantics(record.verb_semantics)
+                    verb_semantics: cleanVerbSemantics(record.verb_semantics),
+                    passage: record.passage
                 }));
 
                 setData(occurrences);
@@ -757,6 +756,7 @@ export const useLocalVerbClassSearch = (preverb: string | null, verbClass: strin
         verb_class: string;
         preverb_semantics: string;
         verb_semantics: string;
+        passage?: string;
     }> | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<Error | null>(null);
@@ -773,7 +773,6 @@ export const useLocalVerbClassSearch = (preverb: string | null, verbClass: strin
                 setLoading(true);
                 const records = await loadData(language);
 
-                // Filter for the specific preverb and verb class
                 const matchingRecords = records.filter(
                     record =>
                         record.preverb.toLowerCase() === preverb.toLowerCase() &&
@@ -786,7 +785,6 @@ export const useLocalVerbClassSearch = (preverb: string | null, verbClass: strin
                     return;
                 }
 
-                // Create occurrences for display
                 const occurrences = matchingRecords.map((record, index) => ({
                     id: `${preverb}_${verbClass}_${index}`,
                     lemma: record.lemma,
@@ -798,7 +796,8 @@ export const useLocalVerbClassSearch = (preverb: string | null, verbClass: strin
                     morphology: record.morphology || 'Unknown',
                     verb_class: record.verb_class || 'Unknown',
                     preverb_semantics: record.preverb_semantics || 'Unknown',
-                    verb_semantics: cleanVerbSemantics(record.verb_semantics)
+                    verb_semantics: cleanVerbSemantics(record.verb_semantics),
+                    passage: record.passage
                 }));
 
                 setData(occurrences);

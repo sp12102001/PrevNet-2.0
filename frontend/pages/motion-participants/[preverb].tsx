@@ -21,6 +21,10 @@ import { formatCentury } from '@/utils/formatters';
 import { getParticipantSemantics, getCloudSemantics } from '@/services/utils';
 import WordCloud from 'react-wordcloud';
 
+// Professional color palettes
+const figureColors = ['#0d47a1', '#1976d2', '#2196f3', '#64b5f6', '#90caf9'];
+const groundColors = ['#004d40', '#00796b', '#009688', '#4db6ac', '#80cbc4'];
+
 // Interface for word cloud words
 interface Word {
     text: string;
@@ -238,6 +242,7 @@ const MotionParticipantsPage = () => {
                             <WordCloud
                                 data={figureWordCloudData}
                                 options={{
+                                    colors: figureColors,
                                     rotations: 2,
                                     rotationAngles: [-90, 0],
                                     fontSizes: [20, 60],
@@ -269,6 +274,7 @@ const MotionParticipantsPage = () => {
                             <WordCloud
                                 data={groundWordCloudData}
                                 options={{
+                                    colors: groundColors,
                                     rotations: 2,
                                     rotationAngles: [-90, 0],
                                     fontSizes: [20, 60],

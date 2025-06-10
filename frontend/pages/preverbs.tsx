@@ -816,6 +816,8 @@ const PreverbDashboard = () => {
                                                             radius={[0, 4, 4, 0]}
                                                             animationDuration={1000}
                                                             barSize={18}
+                                                            onClick={(data) => handlePreverbMeaningClick(data.name)}
+                                                            style={{ cursor: 'pointer' }}
                                                         >
                                                             {prepareChartData(preverbData.meanings).slice(0, 7).map((entry, index) => (
                                                                 <Cell
