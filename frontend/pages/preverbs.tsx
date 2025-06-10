@@ -177,14 +177,14 @@ const renderCustomYAxisTick = (props: {
     const cleanValue = payload.value.replace(/v#\d+\s*/g, '');
 
     // Split long text into multiple lines
-    if (cleanValue.length > 24) {
+    if (cleanValue.length > 30) {
         const words = cleanValue.split(' ');
-        let lines = [];
+        let lines: string[] = [];
         let currentLine = '';
 
         // Create lines with reasonable length
         words.forEach(word => {
-            if ((currentLine + ' ' + word).length <= 24) {
+            if ((currentLine + ' ' + word).length <= 30) {
                 currentLine += (currentLine ? ' ' : '') + word;
             } else {
                 if (currentLine) lines.push(currentLine);
@@ -195,8 +195,8 @@ const renderCustomYAxisTick = (props: {
         if (currentLine) lines.push(currentLine);
 
         // If still too long, truncate the last line
-        if (lines.length > 2) {
-            lines = lines.slice(0, 2);
+        if (lines.length > 3) {
+            lines = lines.slice(0, 3);
             lines[lines.length - 1] += '...';
         }
 
@@ -663,14 +663,14 @@ const PreverbDashboard = () => {
                                                     <BarChart
                                                         data={prepareLiteralData(preverbData.literal_meanings)}
                                                         layout="vertical"
-                                                        margin={{ top: 5, right: 60, left: 180, bottom: 30 }}
+                                                        margin={{ top: 5, right: 60, left: 220, bottom: 30 }}
                                                     >
                                                         <XAxis type="number" />
                                                         <YAxis
                                                             type="category"
                                                             dataKey="name"
                                                             tick={renderCustomYAxisTick}
-                                                            width={170}
+                                                            width={210}
                                                         />
                                                         <Tooltip content={<CustomTooltip />} />
                                                         <Legend
@@ -740,14 +740,14 @@ const PreverbDashboard = () => {
                                                     <BarChart
                                                         data={prepareChartData(preverbData.verb_classes).slice(0, 7)}
                                                         layout="vertical"
-                                                        margin={{ top: 5, right: 60, left: 200, bottom: 30 }}
+                                                        margin={{ top: 5, right: 60, left: 250, bottom: 30 }}
                                                     >
                                                         <XAxis type="number" />
                                                         <YAxis
                                                             type="category"
                                                             dataKey="name"
                                                             tick={renderCustomYAxisTick}
-                                                            width={190}
+                                                            width={240}
                                                         />
                                                         <Tooltip content={<CustomTooltip />} />
                                                         <Bar
@@ -788,14 +788,14 @@ const PreverbDashboard = () => {
                                                     <BarChart
                                                         data={prepareChartData(preverbData.meanings).slice(0, 7)} // Top 7 for better visibility
                                                         layout="vertical"
-                                                        margin={{ top: 5, right: 60, left: 200, bottom: 30 }}
+                                                        margin={{ top: 5, right: 60, left: 250, bottom: 30 }}
                                                     >
                                                         <XAxis type="number" />
                                                         <YAxis
                                                             type="category"
                                                             dataKey="name"
                                                             tick={renderCustomYAxisTick}
-                                                            width={190}
+                                                            width={240}
                                                         />
                                                         <Tooltip
                                                             content={<CustomTooltip />}
