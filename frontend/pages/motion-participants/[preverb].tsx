@@ -19,7 +19,7 @@ import { useLocalPreverbData } from '@/services/localData';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { formatCentury } from '@/utils/formatters';
 import { getParticipantSemantics, getCloudSemantics } from '@/services/utils';
-import WordCloud from 'react-wordcloud';
+import WordCloudWrapper from '@/components/WordCloudWrapper';
 
 // Professional color palettes
 const figureColors = ['#0d47a1', '#1976d2', '#2196f3', '#64b5f6', '#90caf9'];
@@ -29,6 +29,7 @@ const groundColors = ['#004d40', '#00796b', '#009688', '#4db6ac', '#80cbc4'];
 interface Word {
     text: string;
     value: number;
+    lemma?: string;
 }
 
 // Interface for motion participant data
@@ -239,7 +240,7 @@ const MotionParticipantsPage = () => {
                 <CardContent>
                     {figureWordCloudData.length > 0 ? (
                         <div style={{ width: '100%', height: '300px' }}>
-                            <WordCloud
+                            <WordCloudWrapper
                                 data={figureWordCloudData}
                                 options={{
                                     colors: figureColors,
@@ -271,7 +272,7 @@ const MotionParticipantsPage = () => {
                 <CardContent>
                     {groundWordCloudData.length > 0 ? (
                         <div style={{ width: '100%', height: '300px' }}>
-                            <WordCloud
+                            <WordCloudWrapper
                                 data={groundWordCloudData}
                                 options={{
                                     colors: groundColors,
