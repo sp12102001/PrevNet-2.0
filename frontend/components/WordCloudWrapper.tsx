@@ -41,7 +41,14 @@ const WordCloudWrapper: React.FC<WordCloudWrapperProps> = ({ data, options, call
         fontStyle: "italic" as const,
         fontWeight: "bold" as const,
         padding: options.padding,
-        rotate: () => (Math.random() > 0.5 ? options.rotationAngles[0] : options.rotationAngles[1]),
+        rotate: (word: Word) => {
+            // Use a deterministic rotation based on the word text to prevent flashing
+            const hash = word.text.split('').reduce((a, b) => {
+                a = ((a << 5) - a) + b.charCodeAt(0);
+                return a & a;
+            }, 0);
+            return Math.abs(hash) % 2 === 0 ? options.rotationAngles[0] : options.rotationAngles[1];
+        },
         fontSize: (word: Word) => {
             const minSize = options.fontSizes[0];
             const maxSize = options.fontSizes[1];
