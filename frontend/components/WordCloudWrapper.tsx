@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { useWordCloud } from '@isoterik/react-word-cloud';
 
 interface Word {
     text: string;
@@ -9,8 +10,8 @@ interface Word {
 interface WordCloudOptions {
     colors: string[];
     rotations: number;
-    rotationAngles: number[];
-    fontSizes: number[];
+    rotationAngles: [number, number];
+    fontSizes: [number, number];
     padding: number;
 }
 
@@ -25,35 +26,41 @@ interface WordCloudWrapperProps {
     callbacks: WordCloudCallbacks;
 }
 
-type WordCloudComponent = React.ComponentType<{
-    data: Word[];
-    options: WordCloudOptions;
-    callbacks: WordCloudCallbacks;
-}>;
+interface ComputedWord {
+    text: string;
+    size: number;
+    rotate: number;
+    x: number;
+    y: number;
+}
 
 const WordCloudWrapper: React.FC<WordCloudWrapperProps> = ({ data, options, callbacks }) => {
-    const [WordCloud, setWordCloud] = useState<WordCloudComponent | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const hookOptions = {
+        words: data,
+        font: "Inter" as const,
+        fontStyle: "italic" as const,
+        fontWeight: "bold" as const,
+        padding: options.padding,
+        rotate: () => (Math.random() > 0.5 ? options.rotationAngles[0] : options.rotationAngles[1]),
+        fontSize: (word: Word) => {
+            const minSize = options.fontSizes[0];
+            const maxSize = options.fontSizes[1];
+            const values = data.map(w => w.value);
+            if (values.length === 0) return minSize;
+            const maxVal = Math.max(...values);
+            const minVal = Math.min(...values);
+            if (maxVal === minVal) return minSize;
+            const size = minSize + ((word.value - minVal) / (maxVal - minVal)) * (maxSize - minSize);
+            return size;
+        },
+        height: 400,
+        width: 800,
+    };
+    const { computedWords, isLoading } = useWordCloud(hookOptions);
 
-    useEffect(() => {
-        const loadWordCloud = async () => {
-            try {
-                // Dynamically import react-wordcloud to handle SSR issues
-                const wordCloudModule = await import('react-wordcloud');
-                setWordCloud(() => wordCloudModule.default);
-                setLoading(false);
-            } catch (err) {
-                console.error('Failed to load WordCloud component:', err);
-                setError('WordCloud component failed to load');
-                setLoading(false);
-            }
-        };
+    const wordMap = new Map(data.map(w => [w.text, w]));
 
-        loadWordCloud();
-    }, []);
-
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="flex items-center justify-center h-[300px]">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
@@ -61,74 +68,33 @@ const WordCloudWrapper: React.FC<WordCloudWrapperProps> = ({ data, options, call
         );
     }
 
-    if (error || !WordCloud) {
-        // Fallback: Simple word list when WordCloud fails
-        return (
-            <div className="p-4">
-                <div className="mb-4 text-sm text-muted-foreground">
-                    WordCloud view unavailable. Showing word list instead:
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                    {data.map((word, index) => (
-                        <button
-                            key={index}
-                            onClick={() => callbacks.onWordClick(word)}
-                            className="px-3 py-2 bg-muted hover:bg-muted/80 rounded-md transition-colors text-left border border-border hover:border-primary"
-                            title={callbacks.getWordTooltip(word)}
-                            style={{
-                                fontSize: `${Math.min(16 + word.value * 2, 24)}px`,
-                                color: options.colors[index % options.colors.length]
-                            }}
-                        >
-                            {word.text}
-                            <span className="text-xs text-muted-foreground ml-2">
-                                ({word.value})
-                            </span>
-                        </button>
-                    ))}
-                </div>
-            </div>
-        );
-    }
+    return (
+        <div style={{ width: hookOptions.width, height: hookOptions.height, position: 'relative' }}>
+            {computedWords.map((word: ComputedWord, i: number) => {
+                const originalWord = wordMap.get(word.text);
+                if (!originalWord) return null;
 
-    try {
-        return (
-            <WordCloud
-                data={data}
-                options={options}
-                callbacks={callbacks}
-            />
-        );
-    } catch (renderError) {
-        console.error('WordCloud render error:', renderError);
-        // Fallback to word list if rendering fails
-        return (
-            <div className="p-4">
-                <div className="mb-4 text-sm text-muted-foreground">
-                    WordCloud rendering failed. Showing word list instead:
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                    {data.map((word, index) => (
-                        <button
-                            key={index}
-                            onClick={() => callbacks.onWordClick(word)}
-                            className="px-3 py-2 bg-muted hover:bg-muted/80 rounded-md transition-colors text-left border border-border hover:border-primary"
-                            title={callbacks.getWordTooltip(word)}
-                            style={{
-                                fontSize: `${Math.min(16 + word.value * 2, 24)}px`,
-                                color: options.colors[index % options.colors.length]
-                            }}
-                        >
-                            {word.text}
-                            <span className="text-xs text-muted-foreground ml-2">
-                                ({word.value})
-                            </span>
-                        </button>
-                    ))}
-                </div>
-            </div>
-        );
-    }
+                return (
+                    <div
+                        key={word.text}
+                        style={{
+                            position: 'absolute',
+                            left: word.x,
+                            top: word.y,
+                            fontSize: word.size,
+                            transform: `rotate(${word.rotate}deg)`,
+                            color: options.colors[i % options.colors.length],
+                            cursor: 'pointer'
+                        }}
+                        onClick={() => callbacks.onWordClick(originalWord)}
+                        title={callbacks.getWordTooltip(originalWord)}
+                    >
+                        {word.text}
+                    </div>
+                );
+            })}
+        </div>
+    );
 };
 
 export default WordCloudWrapper;

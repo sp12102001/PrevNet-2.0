@@ -7,16 +7,25 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
+import { useAllMotionParticipantLemmas } from '@/services/localData';
+import WordCloudWrapper from '@/components/WordCloudWrapper';
+import LoadingSpinner from '@/components/LoadingSpinner';
+import ErrorFallback from '@/components/ErrorFallback';
 
 const MotionParticipantSearchIndex = () => {
     const router = useRouter();
     const [lemma, setLemma] = useState('');
+    const { data: lemmaData, loading, error, language } = useAllMotionParticipantLemmas();
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
         if (lemma.trim()) {
             router.push(`/motion-participants/search/${encodeURIComponent(lemma.trim())}`);
         }
+    };
+
+    const handleWordClick = (word: { text: string; value: number }) => {
+        router.push(`/motion-participants/search/${encodeURIComponent(word.text)}`);
     };
 
     const handleExampleClick = (exampleLemma: string) => {
@@ -28,6 +37,19 @@ const MotionParticipantSearchIndex = () => {
         'homo', 'deus', 'rex', 'miles', 'navis', 'equus', 'manus', 'caput',
         'urbs', 'domus', 'terra', 'aqua', 'mons', 'via', 'porta', 'campus'
     ];
+
+    const wordCloudOptions = {
+        fontSizes: [20, 60] as [number, number],
+        rotations: 2,
+        rotationAngles: [-90, 0] as [number, number],
+        padding: 2,
+        colors: ['#3182CE', '#2B6CB0', '#2C5282', '#2A4365'],
+    };
+
+    const wordCloudCallbacks = {
+        onWordClick: handleWordClick,
+        getWordTooltip: (word: { text: string, value: number }) => `${word.text} (${word.value} occurrences)`,
+    };
 
     return (
         <div className="container mx-auto px-4 py-8">
@@ -41,6 +63,28 @@ const MotionParticipantSearchIndex = () => {
                         Enter a lemma to see all occurrences where it appears as a motion participant (Figure or Ground) across different preverbs
                     </p>
                 </div>
+
+                <Card className="mb-8">
+                    <CardHeader>
+                        <CardTitle>Most Common Motion Participants</CardTitle>
+                        <CardDescription>
+                            This word cloud shows the most frequent lemmas acting as Figure or Ground in the <span className="font-semibold capitalize">{language}</span> corpus. Click a word to search.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {loading && <LoadingSpinner />}
+                        {error && <ErrorFallback error={error} resetError={() => {}} />}
+                        {lemmaData && (
+                            <div className="h-96">
+                                <WordCloudWrapper
+                                    data={lemmaData}
+                                    options={wordCloudOptions}
+                                    callbacks={wordCloudCallbacks}
+                                />
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
 
                 <Card className="mb-8">
                     <CardHeader>

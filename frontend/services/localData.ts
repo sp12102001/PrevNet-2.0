@@ -907,3 +907,72 @@ export const useLocalMotionParticipantSearch = (lemma: string | null) => {
 
     return { data, loading, error, language };
 };
+
+/**
+ * Get all motion participant lemmas and their frequencies for a word cloud
+ */
+export const useAllMotionParticipantLemmas = () => {
+    const [data, setData] = useState<Array<{ text: string; value: number }> | null>(null);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<Error | null>(null);
+    const [language, _setLanguage] = useState<Language>(currentLanguage);
+
+    // Listen for language changes
+    useEffect(() => {
+        const handleLanguageChange = () => {
+            _setLanguage(currentLanguage);
+        };
+
+        // Check for language changes periodically
+        const intervalId = setInterval(() => {
+            if (currentLanguage !== language) {
+                handleLanguageChange();
+            }
+        }, 500);
+
+        return () => clearInterval(intervalId);
+    }, [language]);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                const records = await loadData(language);
+
+                const lemmaCounts: { [key: string]: number } = {};
+
+                records.forEach(record => {
+                    if (!record.participant_lemma || record.participant_lemma === 'NA') return;
+
+                    try {
+                        const lemmas = record.participant_lemma.replace(/^\[|\]$/g, '').replace(/'/g, '').split(/,\s*/);
+                        lemmas.forEach(lemma => {
+                            const trimmedLemma = lemma.trim();
+                            if (trimmedLemma) {
+                                lemmaCounts[trimmedLemma] = (lemmaCounts[trimmedLemma] || 0) + 1;
+                            }
+                        });
+                    } catch {
+                        // Ignore parsing errors for now
+                    }
+                });
+
+                const lemmaData = Object.entries(lemmaCounts).map(([text, value]) => ({
+                    text,
+                    value,
+                }));
+
+                setData(lemmaData);
+                setLoading(false);
+            } catch (error) {
+                console.error(`Error fetching all motion participant lemmas:`, error);
+                setError(error instanceof Error ? error : new Error('Failed to fetch motion participant data'));
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, [language]);
+
+    return { data, loading, error, language };
+};
