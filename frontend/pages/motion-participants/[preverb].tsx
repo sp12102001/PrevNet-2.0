@@ -239,22 +239,20 @@ const MotionParticipantsPage = () => {
                 </CardHeader>
                 <CardContent>
                     {figureWordCloudData.length > 0 ? (
-                        <div style={{ width: '100%', height: '300px' }}>
-                            <WordCloudWrapper
-                                data={figureWordCloudData}
-                                options={{
-                                    colors: figureColors,
-                                    rotations: 2,
-                                    rotationAngles: [-90, 0],
-                                    fontSizes: [20, 60],
-                                    padding: 1,
-                                }}
-                                callbacks={{
-                                    onWordClick: (word: Word) => handleMeaningClick(word.text),
-                                    getWordTooltip: (word: Word) => `${word.text} (${word.value} occurrences)`,
-                                }}
-                            />
-                        </div>
+                        <WordCloudWrapper
+                            data={figureWordCloudData}
+                            options={{
+                                colors: figureColors,
+                                rotations: 2,
+                                rotationAngles: [-90, 0],
+                                fontSizes: [20, 60],
+                                padding: 1,
+                            }}
+                            callbacks={{
+                                onWordClick: (word: Word) => handleMeaningClick(word.text),
+                                getWordTooltip: (word: Word) => `${word.text} (${word.value} occurrences)`,
+                            }}
+                        />
                     ) : (
                         <div className="text-center py-8 text-muted-foreground">
                             No significant figure data to display
@@ -271,22 +269,20 @@ const MotionParticipantsPage = () => {
                 </CardHeader>
                 <CardContent>
                     {groundWordCloudData.length > 0 ? (
-                        <div style={{ width: '100%', height: '300px' }}>
-                            <WordCloudWrapper
-                                data={groundWordCloudData}
-                                options={{
-                                    colors: groundColors,
-                                    rotations: 2,
-                                    rotationAngles: [-90, 0],
-                                    fontSizes: [20, 60],
-                                    padding: 1,
-                                }}
-                                callbacks={{
-                                    onWordClick: (word: Word) => handleMeaningClick(word.text),
-                                    getWordTooltip: (word: Word) => `${word.text} (${word.value} occurrences)`,
-                                }}
-                            />
-                        </div>
+                        <WordCloudWrapper
+                            data={groundWordCloudData}
+                            options={{
+                                colors: groundColors,
+                                rotations: 2,
+                                rotationAngles: [-90, 0],
+                                fontSizes: [20, 60],
+                                padding: 1,
+                            }}
+                            callbacks={{
+                                onWordClick: (word: Word) => handleMeaningClick(word.text),
+                                getWordTooltip: (word: Word) => `${word.text} (${word.value} occurrences)`,
+                            }}
+                        />
                     ) : (
                         <div className="text-center py-8 text-muted-foreground">
                             No significant ground data to display
