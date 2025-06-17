@@ -137,22 +137,32 @@ const WordCloudWrapper: React.FC<WordCloudWrapperProps> = ({ data, options, call
     }
 
     return (
-        <div style={{ width: hookOptions.width, height: hookOptions.height, position: 'relative' }}>
+        <div style={{ width: hookOptions.width, height: hookOptions.height, position: 'relative', overflow: 'hidden' }}>
             {computedWords.map((word: ComputedWord, i: number) => {
                 const originalWord = wordMap.get(word.text);
                 if (!originalWord) return null;
 
+                // Adjust positioning to center the word cloud properly
+                const centerX = hookOptions.width / 2;
+                const centerY = hookOptions.height / 2;
+                const adjustedX = centerX + (word.x || 0);
+                const adjustedY = centerY + (word.y || 0);
+
                 return (
                     <div
-                        key={`${word.text}-${word.x}-${word.y}`}
+                        key={`${word.text}-${i}`}
                         style={{
                             position: 'absolute',
-                            left: word.x,
-                            top: word.y,
-                            fontSize: word.size,
-                            transform: `rotate(${word.rotate}deg)`,
+                            left: `${adjustedX}px`,
+                            top: `${adjustedY}px`,
+                            fontSize: `${word.size}px`,
+                            transform: `translate(-50%, -50%) rotate(${word.rotate || 0}deg)`,
+                            transformOrigin: 'center',
                             color: options.colors[i % options.colors.length],
-                            cursor: 'pointer'
+                            cursor: 'pointer',
+                            userSelect: 'none',
+                            whiteSpace: 'nowrap',
+                            pointerEvents: 'auto'
                         }}
                         onClick={() => callbacks.onWordClick(originalWord)}
                         title={callbacks.getWordTooltip(originalWord)}
