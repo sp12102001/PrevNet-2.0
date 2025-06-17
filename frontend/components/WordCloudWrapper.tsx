@@ -137,40 +137,69 @@ const WordCloudWrapper: React.FC<WordCloudWrapperProps> = ({ data, options, call
     }
 
     return (
-        <div style={{ width: hookOptions.width, height: hookOptions.height, position: 'relative', overflow: 'hidden' }}>
-            {computedWords.map((word: ComputedWord, i: number) => {
-                const originalWord = wordMap.get(word.text);
-                if (!originalWord) return null;
+        <div
+            className="w-full h-96 border border-border rounded-lg bg-card"
+            style={{
+                position: 'relative',
+                overflow: 'hidden',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+            }}
+        >
+            <div
+                style={{
+                    width: hookOptions.width,
+                    height: hookOptions.height,
+                    position: 'relative',
+                    maxWidth: '100%',
+                    maxHeight: '100%'
+                }}
+            >
+                {computedWords.map((word: ComputedWord, i: number) => {
+                    const originalWord = wordMap.get(word.text);
+                    if (!originalWord) return null;
 
-                // Adjust positioning to center the word cloud properly
-                const centerX = hookOptions.width / 2;
-                const centerY = hookOptions.height / 2;
-                const adjustedX = centerX + (word.x || 0);
-                const adjustedY = centerY + (word.y || 0);
+                    // Keep words within the container bounds
+                    const containerWidth = Math.min(hookOptions.width, 800);
+                    const containerHeight = Math.min(hookOptions.height, 400);
 
-                return (
-                    <div
-                        key={`${word.text}-${i}`}
-                        style={{
-                            position: 'absolute',
-                            left: `${adjustedX}px`,
-                            top: `${adjustedY}px`,
-                            fontSize: `${word.size}px`,
-                            transform: `translate(-50%, -50%) rotate(${word.rotate || 0}deg)`,
-                            transformOrigin: 'center',
-                            color: options.colors[i % options.colors.length],
-                            cursor: 'pointer',
-                            userSelect: 'none',
-                            whiteSpace: 'nowrap',
-                            pointerEvents: 'auto'
-                        }}
-                        onClick={() => callbacks.onWordClick(originalWord)}
-                        title={callbacks.getWordTooltip(originalWord)}
-                    >
-                        {word.text}
-                    </div>
-                );
-            })}
+                    // Position relative to container center, but constrain to bounds
+                    const centerX = containerWidth / 2;
+                    const centerY = containerHeight / 2;
+
+                    // Scale down coordinates if they're from a larger space
+                    const scaledX = (word.x || 0) * 0.8; // Scale down to fit better
+                    const scaledY = (word.y || 0) * 0.8;
+
+                    const adjustedX = Math.max(50, Math.min(containerWidth - 50, centerX + scaledX));
+                    const adjustedY = Math.max(30, Math.min(containerHeight - 30, centerY + scaledY));
+
+                    return (
+                        <div
+                            key={`${word.text}-${i}`}
+                            style={{
+                                position: 'absolute',
+                                left: `${adjustedX}px`,
+                                top: `${adjustedY}px`,
+                                fontSize: `${Math.min(word.size, 32)}px`, // Cap font size
+                                transform: `translate(-50%, -50%) rotate(${word.rotate || 0}deg)`,
+                                transformOrigin: 'center',
+                                color: options.colors[i % options.colors.length],
+                                cursor: 'pointer',
+                                userSelect: 'none',
+                                whiteSpace: 'nowrap',
+                                pointerEvents: 'auto',
+                                zIndex: 1
+                            }}
+                            onClick={() => callbacks.onWordClick(originalWord)}
+                            title={callbacks.getWordTooltip(originalWord)}
+                        >
+                            {word.text}
+                        </div>
+                    );
+                })}
+            </div>
         </div>
     );
 };
