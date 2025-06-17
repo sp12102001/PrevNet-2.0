@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useWordCloud } from '@isoterik/react-word-cloud';
 
 interface Word {
@@ -35,7 +35,10 @@ interface ComputedWord {
 }
 
 const WordCloudWrapper: React.FC<WordCloudWrapperProps> = ({ data, options, callbacks }) => {
-    const hookOptions = {
+    const [showFallback, setShowFallback] = useState(false);
+
+    // Memoize the hook options to prevent continuous re-rendering
+    const hookOptions = useMemo(() => ({
         words: data,
         font: "Inter" as const,
         fontStyle: "italic" as const,
@@ -62,15 +65,73 @@ const WordCloudWrapper: React.FC<WordCloudWrapperProps> = ({ data, options, call
         },
         height: 400,
         width: 800,
-    };
+    }), [data, options.padding, options.rotationAngles, options.fontSizes]);
+
     const { computedWords, isLoading } = useWordCloud(hookOptions);
 
-    const wordMap = new Map(data.map(w => [w.text, w]));
+    // Memoize the word map to prevent unnecessary recalculations
+    const wordMap = useMemo(() => new Map(data.map(w => [w.text, w])), [data]);
 
-    if (isLoading) {
+    // Fallback to grid layout if loading takes too long or causes issues
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (isLoading) {
+                setShowFallback(true);
+            }
+        }, 3000); // Show fallback after 3 seconds
+
+        return () => clearTimeout(timer);
+    }, [isLoading]);
+
+    // Sort data by frequency for fallback display
+    const sortedData = useMemo(() =>
+        [...data].sort((a, b) => b.value - a.value).slice(0, 50)
+    , [data]);
+
+    if (isLoading && !showFallback) {
         return (
             <div className="flex items-center justify-center h-[300px]">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+            </div>
+        );
+    }
+
+    // Fallback grid layout
+    if (showFallback || computedWords.length === 0) {
+        return (
+            <div className="p-4">
+                <div className="mb-4 text-sm text-muted-foreground">
+                    Showing motion participants in a simple layout:
+                </div>
+                <div className="flex flex-wrap gap-2 justify-center">
+                    {sortedData.map((word, index) => {
+                        const minSize = options.fontSizes[0];
+                        const maxSize = options.fontSizes[1];
+                        const maxVal = Math.max(...sortedData.map(w => w.value));
+                        const minVal = Math.min(...sortedData.map(w => w.value));
+                        const normalizedSize = maxVal === minVal ? minSize :
+                            minSize + ((word.value - minVal) / (maxVal - minVal)) * (maxSize - minSize);
+
+                        return (
+                            <button
+                                key={word.text}
+                                onClick={() => callbacks.onWordClick(word)}
+                                className="px-3 py-2 bg-muted hover:bg-muted/80 rounded-md transition-colors border border-border hover:border-primary"
+                                title={callbacks.getWordTooltip(word)}
+                                style={{
+                                    fontSize: `${Math.min(normalizedSize, 24)}px`,
+                                    color: options.colors[index % options.colors.length],
+                                    fontWeight: word.value > (maxVal * 0.7) ? 'bold' : 'normal'
+                                }}
+                            >
+                                {word.text}
+                                <span className="text-xs text-muted-foreground ml-1">
+                                    ({word.value})
+                                </span>
+                            </button>
+                        );
+                    })}
+                </div>
             </div>
         );
     }
@@ -83,7 +144,7 @@ const WordCloudWrapper: React.FC<WordCloudWrapperProps> = ({ data, options, call
 
                 return (
                     <div
-                        key={word.text}
+                        key={`${word.text}-${word.x}-${word.y}`}
                         style={{
                             position: 'absolute',
                             left: word.x,
