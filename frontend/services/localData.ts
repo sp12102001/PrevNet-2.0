@@ -22,7 +22,7 @@ interface LocalDataRecord {
     place: string;
     latitude: string;
     longitude: string;
-    morphology: string;
+    morphological_features: string;
     spatial_relation_role: string;
     spatial_relation_expression: string;
     figure_semantics: string;
@@ -414,7 +414,7 @@ export const useLocalPreverbData = (preverb: string | null) => {
                         title: record.title,
                         century: record.century,
                         language_period: record.language_period || 'Unknown',
-                        morphology: record.morphology || 'Unknown',
+                        morphology: record.morphological_features || 'Unknown',
                         verb_class: record.verb_class || 'Unknown',
                         preverb_semantics: record.preverb_semantics || 'Unknown',
                         spatial_relation_role: record.spatial_relation_role || 'NA',
@@ -608,6 +608,22 @@ export const useLocalLemmaSearch = (preverb: string | null, lemma: string | null
     const [error, setError] = useState<Error | null>(null);
     const [language, _setLanguage] = useState<Language>(currentLanguage);
 
+    // Listen for language changes
+    useEffect(() => {
+        const handleLanguageChange = () => {
+            _setLanguage(currentLanguage);
+        };
+
+        // Check for language changes periodically
+        const intervalId = setInterval(() => {
+            if (currentLanguage !== language) {
+                handleLanguageChange();
+            }
+        }, 500);
+
+        return () => clearInterval(intervalId);
+    }, [language]);
+
     useEffect(() => {
         if (!preverb || !lemma) {
             setData(null);
@@ -638,7 +654,7 @@ export const useLocalLemmaSearch = (preverb: string | null, lemma: string | null
                     title: record.title,
                     century: record.century,
                     language_period: record.language_period || 'Unknown',
-                    morphology: record.morphology || 'Unknown',
+                    morphology: record.morphological_features || 'Unknown',
                     verb_class: record.verb_class || 'Unknown',
                     preverb_semantics: record.preverb_semantics || 'Unknown',
                     verb_semantics: cleanVerbSemantics(record.verb_semantics),
@@ -682,6 +698,22 @@ export const useLocalPreverbMeaningSearch = (preverb: string | null, meaning: st
     const [error, setError] = useState<Error | null>(null);
     const [language, _setLanguage] = useState<Language>(currentLanguage);
 
+    // Listen for language changes
+    useEffect(() => {
+        const handleLanguageChange = () => {
+            _setLanguage(currentLanguage);
+        };
+
+        // Check for language changes periodically
+        const intervalId = setInterval(() => {
+            if (currentLanguage !== language) {
+                handleLanguageChange();
+            }
+        }, 500);
+
+        return () => clearInterval(intervalId);
+    }, [language]);
+
     useEffect(() => {
         if (!preverb || !meaning) {
             setData(null);
@@ -718,7 +750,7 @@ export const useLocalPreverbMeaningSearch = (preverb: string | null, meaning: st
                     title: record.title,
                     century: record.century,
                     language_period: record.language_period || 'Unknown',
-                    morphology: record.morphology || 'Unknown',
+                    morphology: record.morphological_features || 'Unknown',
                     verb_class: record.verb_class || 'Unknown',
                     preverb_semantics: record.preverb_semantics || 'Unknown',
                     verb_semantics: cleanVerbSemantics(record.verb_semantics),
@@ -762,6 +794,22 @@ export const useLocalVerbClassSearch = (preverb: string | null, verbClass: strin
     const [error, setError] = useState<Error | null>(null);
     const [language, _setLanguage] = useState<Language>(currentLanguage);
 
+    // Listen for language changes
+    useEffect(() => {
+        const handleLanguageChange = () => {
+            _setLanguage(currentLanguage);
+        };
+
+        // Check for language changes periodically
+        const intervalId = setInterval(() => {
+            if (currentLanguage !== language) {
+                handleLanguageChange();
+            }
+        }, 500);
+
+        return () => clearInterval(intervalId);
+    }, [language]);
+
     useEffect(() => {
         if (!preverb || !verbClass) {
             setData(null);
@@ -793,7 +841,7 @@ export const useLocalVerbClassSearch = (preverb: string | null, verbClass: strin
                     title: record.title,
                     century: record.century,
                     language_period: record.language_period || 'Unknown',
-                    morphology: record.morphology || 'Unknown',
+                    morphology: record.morphological_features || 'Unknown',
                     verb_class: record.verb_class || 'Unknown',
                     preverb_semantics: record.preverb_semantics || 'Unknown',
                     verb_semantics: cleanVerbSemantics(record.verb_semantics),
@@ -811,6 +859,104 @@ export const useLocalVerbClassSearch = (preverb: string | null, verbClass: strin
 
         fetchData();
     }, [preverb, verbClass, language]);
+
+    return { data, loading, error, language };
+};
+
+/**
+ * Search for occurrences by literal type (LITERAL or NON-LITERAL)
+ */
+export const useLocalLiteralSearch = (preverb: string | null, literalType: string | null) => {
+    const [data, setData] = useState<Array<{
+        id: string;
+        lemma: string;
+        sentence: string;
+        author: string;
+        title: string;
+        century: string;
+        language_period: string;
+        morphology: string;
+        verb_class: string;
+        preverb_semantics: string;
+        verb_semantics: string;
+        passage?: string;
+    }> | null>(null);
+    const [loading, setLoading] = useState<boolean>(false);
+    const [error, setError] = useState<Error | null>(null);
+    const [language, _setLanguage] = useState<Language>(currentLanguage);
+
+    // Listen for language changes
+    useEffect(() => {
+        const handleLanguageChange = () => {
+            _setLanguage(currentLanguage);
+        };
+
+        // Check for language changes periodically
+        const intervalId = setInterval(() => {
+            if (currentLanguage !== language) {
+                handleLanguageChange();
+            }
+        }, 500);
+
+        return () => clearInterval(intervalId);
+    }, [language]);
+
+    useEffect(() => {
+        if (!preverb || !literalType) {
+            setData(null);
+            return;
+        }
+
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                const records = await loadData(language);
+
+                const matchingRecords = records.filter(record => {
+                    if (record.preverb.toLowerCase() !== preverb.toLowerCase()) return false;
+
+                    // Check if the record matches the literal type
+                    if ('literal_meaning' in record && record.literal_meaning !== undefined) {
+                        // Use the literal_meaning boolean field from the dataset
+                        const isLiteral = record.literal_meaning === true;
+                        return (literalType === 'LITERAL' && isLiteral) || (literalType === 'NON-LITERAL' && !isLiteral);
+                    }
+
+                    return false;
+                });
+
+                if (matchingRecords.length === 0) {
+                    setData([]);
+                    setLoading(false);
+                    return;
+                }
+
+                const occurrences = matchingRecords.map((record, index) => ({
+                    id: `${preverb}_${literalType}_${index}`,
+                    lemma: record.lemma,
+                    sentence: record.sentence,
+                    author: record.author,
+                    title: record.title,
+                    century: record.century,
+                    language_period: record.language_period || 'Unknown',
+                    morphology: record.morphological_features || 'Unknown',
+                    verb_class: record.verb_class || 'Unknown',
+                    preverb_semantics: record.preverb_semantics || 'Unknown',
+                    verb_semantics: cleanVerbSemantics(record.verb_semantics),
+                    passage: record.passage
+                }));
+
+                setData(occurrences);
+                setLoading(false);
+            } catch (error) {
+                console.error(`Error fetching literal search data:`, error);
+                setError(error instanceof Error ? error : new Error('Failed to fetch literal search data'));
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, [preverb, literalType, language]);
 
     return { data, loading, error, language };
 };
@@ -882,7 +1028,7 @@ export const useLocalMotionParticipantSearch = (lemma: string | null) => {
                     title: record.title,
                     century: record.century,
                     language_period: record.language_period || 'Unknown',
-                    morphology: record.morphology || 'Unknown',
+                    morphology: record.morphological_features || 'Unknown',
                     verb_class: record.verb_class || 'Unknown',
                     preverb_semantics: record.preverb_semantics || 'Unknown',
                     verb_semantics: cleanVerbSemantics(record.verb_semantics),

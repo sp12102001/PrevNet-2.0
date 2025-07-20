@@ -16,20 +16,20 @@ export const cleanVerbSemantics = (semantics: string): string => {
 
 /**
  * Parses participant semantics strings (for Figure/Ground).
- * This function handles brackets, quotes, and splitting by 'n#L' prefixes,
+ * This function handles brackets, quotes, and splitting by 'n#' prefixes (including n#, n#L, n#G),
  * returning an array of cleaned glosses.
- * e.g., "['n#L123 apple', 'n#L456 fruit']" -> ["apple", "fruit"]
+ * e.g., "['n#123 apple', 'n#L456 fruit', 'n#G789 vegetable']" -> ["apple", "fruit", "vegetable"]
  */
 export const getParticipantSemantics = (semantics: string): string[] => {
     if (!semantics || semantics === 'NA') return [];
 
-    // Remove brackets and quotes, then split by the synset prefix
+    // Remove brackets and quotes, then split by the synset prefix (n#, n#L, or n#G)
     const cleaned = semantics.replace(/^\[|\]$/g, '').replace(/'/g, '');
-    const meanings = cleaned.split(/,\s*(?=n#L)/);
+    const meanings = cleaned.split(/,\s*(?=n#)/);
 
     // For each meaning, remove the synset ID and trim whitespace
     return meanings.map(meaning => {
-        return meaning.replace(/^n#L\d+\s*/, '').trim();
+        return meaning.replace(/^n#[LG]?\d+\s*/, '').trim();
     }).filter(meaning => meaning); // Filter out any empty strings
 };
 

@@ -189,16 +189,6 @@ const Navigation = () => {
                         )}
                     </div>
                     <Link
-                        href="/motion-participants/search"
-                        className={`relative font-medium transition-colors hover:text-blue-500 ${
-                            router.pathname.startsWith('/motion-participants')
-                                ? 'text-blue-500 after:absolute after:bottom-[-6px] after:left-0 after:w-full after:h-[2px] after:bg-blue-500 after:rounded-full'
-                                : 'text-card-foreground'
-                        }`}
-                    >
-                        Participants
-                    </Link>
-                    <Link
                         href="/output"
                         className={`relative font-medium transition-colors hover:text-blue-500 ${
                             router.pathname === '/output'
