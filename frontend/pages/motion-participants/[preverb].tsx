@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import {
     Card,
@@ -77,8 +77,7 @@ const MotionParticipantsPage = () => {
     });
 
     // Function to process participant data
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    const processParticipantData = () => {
+    const processParticipantData = useCallback(() => {
         if (!preverbData?.allExamples) return;
 
         const figureMap = new Map<string, { meaning: string, count: number }>();
@@ -168,7 +167,7 @@ const MotionParticipantsPage = () => {
         setFigureData(figureArray.sort((a, b) => b.count - a.count));
         setGroundData(groundArray.sort((a, b) => b.count - a.count));
         setFilteredOccurrences(occurrences);
-    };
+    }, [preverbData?.allExamples]);
 
     // Handle meaning click
     const handleMeaningClick = (meaning: string) => {
