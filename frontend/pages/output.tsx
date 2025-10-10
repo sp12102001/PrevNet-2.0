@@ -3,39 +3,41 @@ import BackButton from '@/components/BackButton';
 
 const Output = () => {
     return (
-        <div className="space-y-6">
+        <div className="container mx-auto py-8 max-w-4xl">
             <BackButton href="/" label="Back to Home" />
 
-            <h1 className="text-3xl font-bold">Output</h1>
-            <p className="text-muted-foreground mb-6">
+            <h1 className="text-3xl font-bold mt-6 mb-2">Output</h1>
+            <p className="text-muted-foreground mb-8">
                 Research outputs, publications, and other materials from the PrevNet project.
             </p>
 
             <div className="prose max-w-none space-y-8">
-                <p>This page lists publications, talks, poster presentations, datasets, and workshops related to PrevNet.</p>
+                <section>
+                    <p>This page lists publications, talks, poster presentations, datasets, and workshops related to PrevNet.</p>
+                </section>
 
-                <div>
-                    <h2 className="text-2xl font-bold mb-4">DATASETS</h2>
-                    <p>Farina, Andrea. 2025. PREMOVE – A diachronic dataset of Ancient Greek and Latin annotated PREverbed MOtion VErbs. Oxford Text Archive. Literary and Linguistic Data Service. <a href="http://hdl.handle.net/20.500.14106/70457" className="text-blue-600 hover:text-blue-800 underline">http://hdl.handle.net/20.500.14106/70457</a>.</p>
-                </div>
+                <section>
+                    <h2 className="text-2xl font-semibold mb-4">DATASETS</h2>
+                    <p>Farina, Andrea. 2025. PREMOVE – A diachronic dataset of Ancient Greek and Latin annotated PREverbed MOtion VErbs. Oxford Text Archive. Literary and Linguistic Data Service. <a href="http://hdl.handle.net/20.500.14106/70457" className="text-primary hover:underline">http://hdl.handle.net/20.500.14106/70457</a>.</p>
+                </section>
 
-                <div>
-                    <h2 className="text-2xl font-bold mb-4">PUBLICATIONS</h2>
+                <section>
+                    <h2 className="text-2xl font-semibold mb-4">PUBLICATIONS</h2>
                     <p>Farina, Andrea and Barbara McGillivray. 2025. PrevNet. A FAIR and inclusive resource for the study of preverbs in historical languages. In Simone Rebora, Marco Rospocher, and Stefano Bazzaco (eds.), <em>Diversity, Equity, and Inclusion: Challenges and Opportunities for Digital Humanities in the Age of Artificial Intelligence</em>, Proceedings del XIV Convegno Annuale AIUCD, Verona 11-13 giugno 2025, Università di Verona, 2–10.</p>
-                    <p>Farina, Andrea. 2024. Guidelines for a linguistic annotation of preverbed verbs of motion. King&apos;s College London. Figshare. <a href="https://doi.org/10.18742/25055573" className="text-blue-600 hover:text-blue-800 underline">https://doi.org/10.18742/25055573</a>.</p>
-                </div>
+                    <p>Farina, Andrea. 2024. Guidelines for a linguistic annotation of preverbed verbs of motion. King&apos;s College London. Figshare. <a href="https://doi.org/10.18742/25055573" className="text-primary hover:underline">https://doi.org/10.18742/25055573</a>.</p>
+                </section>
 
-                <div>
-                    <h2 className="text-2xl font-bold mb-4">INVITED TALKS</h2>
+                <section>
+                    <h2 className="text-2xl font-semibold mb-4">INVITED TALKS</h2>
                     <p>Farina, Andrea. 2025. PrevNet: Costruzione e applicazione di una risorsa per i preverbi nelle lingue classiche. In Dottorato in Studi Umanistici. Seminari di Linguistica. May 5, 2025, Palermo (Italy).</p>
                     <p>Farina, Andrea. 2024. Annotating preverbed motion verbs in Latin and Ancient Greek. Quantitative studies and future directions. In Computational Approaches to Ancient Greek and Latin Workshop. November 28-29, 2024, Leuven (Belgium).</p>
                     <p>Farina, Andrea. 2024. Going away in Ancient Greek and Latin. A corpus-based quantitative approach to Source preverbs and motion verbs. In Dialing 2024/2025 Seminars. November 28, 2024, Gent (Belgium).</p>
                     <p>Farina, Andrea. 2024. Mapping motion: a quantitative analysis of preverbs in Ancient Greek and Latin verbs of motion. In Weaving connections: a work-in-progress seminar between King&apos;s College London and Lisbon. November 7-8, 2024, London (United Kingdom).</p>
                     <p>Farina, Andrea and Barbara McGillivray. 2024. Fra testo e computer. Metodi digitali e computazionali per lo studio dei testi storici. In Dottorato in Studi Umanistici. Seminari di Linguistica. May 15, 2024, Palermo (Italy).</p>
-                </div>
+                </section>
 
-                <div>
-                    <h2 className="text-2xl font-bold mb-4">TALKS</h2>
+                <section>
+                    <h2 className="text-2xl font-semibold mb-4">TALKS</h2>
                     <p>Farina, Andrea, and Barbara McGillivray. 2025. Enhancing linguistic understanding in Secondary Education through digital resources. A case study on PrevNet for motion verbs in Latin and Ancient Greek. In Twenty-Third International Conference on New Directions in the Humanities. June 25-27, 2025, Hilo (Hawaii, USA).</p>
                     <p>Farina, Andrea, and Barbara McGillivray. 2025. PrevNet. A FAIR and inclusive resource for the study of preverbs in historical languages. In 14th Annual Conference of the Association for Digital Humanities and Digital Culture (AIUCD). June 11-13, 2025, Verona (Italy).</p>
                     <p>Farina, Andrea. 2025. Introducing PrevNet, the first online database on Latin and Ancient Greek preverbs. In 23rd International Colloquium on Latin Linguistics. June 9-13, 2025, Udine (Italy).</p>
@@ -53,22 +55,22 @@ const Output = () => {
                     <p>Farina, Andrea, William Michael Short and Barbara McGillivray. 2023. WordNets and corpora. A case study on the semantic field SEA in Latin and Ancient Greek. In International Colloquium of Historical Linguistics. September 4-8, 2023, Heidelberg (Germany).</p>
                     <p>Farina, Andrea, Barbara McGillivray and Stephen Colvin. 2023. Motion and preverbation in Latin. The relation between the preverbs ab- and ad- and the verbal bases eo and venio. In 22nd International Colloquium on Latin Linguistics. June 19-23, 2023, Prague (Czechia).</p>
                     <p>Farina, Andrea. 2023. Annotating motion events in Latin and Ancient Greek. Towards the creation of PrevNet for preverbs. In King&apos;s College London Digital Humanities Symposium 2023. May 26, 2023, London (United Kingdom).</p>
-                </div>
+                </section>
 
-                <div>
-                    <h2 className="text-2xl font-bold mb-4">POSTER PRESENTATIONS</h2>
+                <section>
+                    <h2 className="text-2xl font-semibold mb-4">POSTER PRESENTATIONS</h2>
                     <p>Farina, Andrea. 2024. Historical languages in the Digital Era. Towards the creation of PrevNet, a new resource for Ancient Greek and Latin preverbs. In UK-Ireland Digital Humanities Association Annual Event. June 4-5, 2024, Cork (Ireland).</p>
-                </div>
+                </section>
 
-                <div>
-                    <h2 className="text-2xl font-bold mb-4">DEMOS</h2>
+                <section>
+                    <h2 className="text-2xl font-semibold mb-4">DEMOS</h2>
                     <p>Farina, Andrea. 2025. Introducing PrevNet for Ancient Greek and Latin. Interdisciplinary perspectives from Digital Humanities, Linguistics, Classics, and Cultural History. Website demo. In UK-Ireland Digital Humanities Association Annual Event. June 17-18, 2025, Glasgow (United Kingdom).</p>
-                </div>
+                </section>
 
-                <div>
-                    <h2 className="text-2xl font-bold mb-4">WORKSHOPS</h2>
+                <section>
+                    <h2 className="text-2xl font-semibold mb-4">WORKSHOPS</h2>
                     <p>2025. From Classics to classrooms: enhancing linguistic understanding with digital resources. Notting Hill & Ealing High School, London (United Kingdom).</p>
-                </div>
+                </section>
             </div>
         </div>
     );
